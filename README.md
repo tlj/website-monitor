@@ -7,6 +7,11 @@ any HTTP hosted file (server side rendered html, json, etc).
 
 Add your configuration in config/config.yaml.
 
+Run with:
+```shell
+docker run -v $(pwd)/config.yaml:/app/config/config.yaml thomaslandro/website-monitor
+```
+
 Example:
 ```yaml
 global:

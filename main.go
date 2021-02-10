@@ -4,14 +4,16 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"log"
 	"net/url"
 	"time"
 	"website-monitor/monitors"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Config struct {
-	Global struct {
+	LogLevel string `yaml:"loglevel"`
+	Global   struct {
 		Headers            map[string]string   `yaml:"headers"`
 		ExpectedStatusCode int                 `yaml:"expected_status_code"`
 		Interval           int                 `yaml:"interval"`
@@ -27,7 +29,7 @@ func schedule(what func() error, delay time.Duration) chan bool {
 		for {
 			err := what()
 			if err != nil {
-				log.Println(err)
+				log.Warn(err)
 			}
 			select {
 			case <-time.After(delay):
@@ -41,15 +43,29 @@ func schedule(what func() error, delay time.Duration) chan bool {
 }
 
 func main() {
+	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
+	log.SetLevel(log.InfoLevel)
+
 	var config Config
 	configData, err := ioutil.ReadFile("config/config.yaml")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	err = yaml.Unmarshal(configData, &config)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
+	}
+
+	switch config.LogLevel {
+	case "debug":
+		log.SetLevel(log.DebugLevel)
+	case "warn":
+		log.SetLevel(log.WarnLevel)
+	case "error":
+		log.SetLevel(log.ErrorLevel)
+	default:
+		log.SetLevel(log.InfoLevel)
 	}
 
 	for k, monitor := range config.Monitors {
@@ -81,14 +97,15 @@ func main() {
 	}
 
 	checks := config.Monitors
-	log.Printf("Starting %d checks...", len(checks))
+	log.Infof("Starting %d checks...", len(checks))
 
 	for _, c := range checks {
-		log.Printf("Starting %s interval %ds", c.Name, c.Interval)
+		log.Infof("Starting %s interval %ds", c.Name, c.Interval)
 		go func(che monitors.Check) {
 			schedule(che.Run, time.Duration(che.Interval)*time.Second)
 		}(c)
 	}
 
-	for {}
+	for {
+	}
 }

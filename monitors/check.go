@@ -2,9 +2,10 @@ package monitors
 
 import (
 	"fmt"
-	"log"
 	"website-monitor/content_checkers"
 	"website-monitor/notifiers"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type monitorType string
@@ -70,17 +71,18 @@ func (c *Check) Run() error {
 	}
 	result, err := jm.Check(*c)
 	if err != nil {
-		log.Println(err)
+		log.Warn(err)
 	}
-	log.Printf("%s %s: %t", c.Name, c.Url, result)
+	log.Debugf("%s %s: %t", c.Name, c.Url, result)
 
 	if result != c.LastSeenState {
+		log.Infof("State change for %s: %t", c.Name, result)
 		c.LastSeenState = result
 		for _, n := range c.Notifiers {
-			log.Println("Sending notification...")
+			log.Debugf("Sending notification...")
 			err := n.Notify(fmt.Sprintf("%s new state: %t (%s)", c.Name, result, c.DisplayUrl))
 			if err != nil {
-				log.Println(err)
+				log.Warn(err)
 			}
 		}
 	}
