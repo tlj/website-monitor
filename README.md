@@ -5,7 +5,7 @@ any HTTP hosted file (server side rendered html, json, etc).
 
 ## Usage
 
-Add your configuration in config/config.yaml
+Add your configuration in config/config.yaml.
 
 Example:
 ```yaml
