@@ -33,7 +33,7 @@ func (c *Check) ParseConfig() error {
 		var contentCheck content_checkers.ContentChecker
 		switch cc["type"] {
 		case "JsonPath":
-			contentCheck = content_checkers.NewJsonPathChecker(cc["name"], cc["path"], cc["expected"], cc["expected_to_exists"] == "true")
+			contentCheck = content_checkers.NewJsonPathChecker(cc["name"], cc["path"], cc["expected"], cc["expected_to_exist"] == "true")
 		case "Regex":
 			contentCheck = content_checkers.NewRegexChecker(cc["name"], cc["regex"], cc["expected_to_exist"] == "true")
 		default:
