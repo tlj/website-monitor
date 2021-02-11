@@ -90,8 +90,12 @@ func main() {
 			config.Monitors[k].DisplayUrl = monitor.Url
 		}
 		if _, ok := monitor.Headers["Referer"]; !ok {
-			u, _ := url.Parse(monitor.Url)
-			config.Monitors[k].Headers["Referer"] = fmt.Sprintf("%s://%s/", u.Scheme, u.Host)
+			if monitor.DisplayUrl != "" && monitor.Url != "" {
+				config.Monitors[k].Headers["Referer"] = monitor.DisplayUrl
+			} else {
+				u, _ := url.Parse(monitor.Url)
+				config.Monitors[k].Headers["Referer"] = fmt.Sprintf("%s://%s/", u.Scheme, u.Host)
+			}
 		}
 		_ = config.Monitors[k].ParseConfig()
 	}

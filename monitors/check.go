@@ -20,6 +20,8 @@ type Check struct {
 	DisplayUrl          string                            `yaml:"display_url"`
 	Type                monitorType                       `yaml:"type"`
 	Headers             map[string]string                 `yaml:"headers"`
+	RegexNotExpected    string                            `yaml:"regex_not_expected"`
+	RegexExpected       string                            `yaml:"regex_expected"`
 	ExpectedStatusCode  int                               `yaml:"expected_status_code"`
 	ContentChecks       []content_checkers.ContentChecker `yaml:"-"`
 	LastSeenState       bool                              `yaml:"last_seen_state"`
@@ -30,13 +32,32 @@ type Check struct {
 }
 
 func (c *Check) ParseConfig() error {
+	if c.RegexExpected != "" {
+		c.ContentChecks = append(c.ContentChecks, content_checkers.NewRegexChecker(c.RegexExpected, c.RegexExpected, true))
+	}
+
+	if c.RegexNotExpected != "" {
+		c.ContentChecks = append(c.ContentChecks, content_checkers.NewRegexChecker(c.RegexNotExpected, c.RegexNotExpected, false))
+	}
+
 	for _, cc := range c.ContentChecksConfig {
+		var expected string
+		var expectedToExist bool
+		if v, ok := cc["expected"]; ok {
+			expected = v
+			expectedToExist = true
+		}
+		if v, ok := cc["not_expected"]; ok {
+			expected = v
+			expectedToExist = false
+		}
+
 		var contentCheck content_checkers.ContentChecker
 		switch cc["type"] {
 		case "JsonPath":
-			contentCheck = content_checkers.NewJsonPathChecker(cc["name"], cc["path"], cc["expected"], cc["expected_to_exist"] == "true")
+			contentCheck = content_checkers.NewJsonPathChecker(cc["name"], cc["path"], expected, expectedToExist)
 		case "Regex":
-			contentCheck = content_checkers.NewRegexChecker(cc["name"], cc["regex"], cc["expected_to_exist"] == "true")
+			contentCheck = content_checkers.NewRegexChecker(cc["name"], expected, expectedToExist)
 		default:
 			return fmt.Errorf("unsupported contentCheck config: %s", cc["type"])
 		}
@@ -62,6 +83,8 @@ func (c *Check) Run() error {
 	var jm Monitor
 	switch c.Type {
 	case HttpMonitorType:
+		jm = &HttpMonitor{}
+	case "":
 		jm = &HttpMonitor{}
 	default:
 		return fmt.Errorf("invalid monitortype '%s'", c.Type)

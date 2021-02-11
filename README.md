@@ -35,14 +35,15 @@ monitors:
       - name: SomeProperty
         type: JsonPath
         path: "//SomeProperty"
-        expected: "Whatever"
-        expected_to_exist: false
+        not_expected: "Whatever"
   - name: "Monitored website feed"
     url: "https://www.monitored.website.example/"
     type: http
     content_checks:
       - name: SomeText
         type: Regex
-        regex: "Some Text"
-        expected_to_exist: false
+        not_expected: "Some Text"
+  - name: "Simpler config for website monitor"
+    url: "https://www.monitored.website.example/simple"
+    regex_expected: "Some monitored text"
 ```
