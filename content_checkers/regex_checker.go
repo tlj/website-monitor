@@ -7,16 +7,16 @@ import (
 )
 
 type RegexChecker struct {
-	name             string
-	regex            string
-	expectedExisting bool
+	Name             string
+	Regex            string
+	ExpectedExisting bool
 }
 
 func NewRegexChecker(name, regex string, expectedExisting bool) *RegexChecker {
 	return &RegexChecker{
-		name:             name,
-		regex:            regex,
-		expectedExisting: expectedExisting,
+		Name:             name,
+		Regex:            regex,
+		ExpectedExisting: expectedExisting,
 	}
 }
 
@@ -26,11 +26,11 @@ func (c *RegexChecker) Check(r io.Reader) (bool, error) {
 		return false, err
 	}
 
-	rx, err := regexp.Compile(c.regex)
+	rx, err := regexp.Compile(c.Regex)
 	if err != nil {
 		return false, err
 	}
 
 	exists := rx.Match(data)
-	return exists && c.expectedExisting, nil
+	return exists && c.ExpectedExisting, nil
 }
