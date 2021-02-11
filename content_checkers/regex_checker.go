@@ -32,5 +32,9 @@ func (c *RegexChecker) Check(r io.Reader) (bool, error) {
 	}
 
 	exists := rx.Match(data)
-	return exists && c.ExpectedExisting, nil
+	if !c.ExpectedExisting {
+		return !exists, nil
+	}
+
+	return exists, nil
 }
