@@ -1,5 +1,9 @@
 package notifiers
 
+import (
+	"website-monitor/result"
+)
+
 type Notifier interface {
-	Notify(msg string) error
+	Notify(name, displayUrl string, result *result.Results) error
 }

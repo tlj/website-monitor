@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
+	"website-monitor/result"
 )
 
 type SlackNotifier struct {
@@ -18,17 +20,43 @@ func NewSlackNotifier(webhookUrl string) *SlackNotifier {
 	}
 }
 
-func (s *SlackNotifier) Notify(msg string) error {
-	return sendSlackNotification(s.WebhookUrl, msg)
+type SlackTextSection struct {
+	Type string `json:"type"`
+	Text string `json:"text"`
+}
+
+type SlackBlock struct {
+	Type string `json:"type"`
+	Text SlackTextSection `json:"text"`
 }
 
 type SlackRequestBody struct {
 	Text string `json:"text"`
+	Blocks []SlackBlock `json:"blocks"`
 }
 
-func sendSlackNotification(webhookUrl string, msg string) error {
-	slackBody, _ := json.Marshal(SlackRequestBody{Text: msg})
-	req, err := http.NewRequest(http.MethodPost, webhookUrl, bytes.NewBuffer(slackBody))
+func (s *SlackNotifier) Notify(name, displayUrl string, result *result.Results) error {
+	var text string
+	if result.AllTrue() {
+		text = fmt.Sprintf("<%s|%s> *matches* checks!", displayUrl, name)
+	} else {
+		text = fmt.Sprintf("<%s|%s> does *not* match checks!", displayUrl, name)
+	}
+
+	body := SlackRequestBody{}
+	body.Text = text
+	for _, r := range result.Results {
+		body.Blocks = append(body.Blocks, SlackBlock{
+			Type: "section",
+			Text: SlackTextSection{
+				Type: "mrkdwn",
+				Text: fmt.Sprintf("%s: %t (err: %v)", r.ContentChecker, r.Result, r.Err),
+			},
+		})
+	}
+
+	slackBody, _ := json.Marshal(body)
+	req, err := http.NewRequest(http.MethodPost, s.WebhookUrl, bytes.NewBuffer(slackBody))
 	if err != nil {
 		return err
 	}
@@ -54,3 +82,4 @@ func sendSlackNotification(webhookUrl string, msg string) error {
 
 	return nil
 }
+

@@ -6,14 +6,15 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+	"website-monitor/result"
 )
 
 type HttpMonitor struct{}
 
-func (jm *HttpMonitor) Check(check Check) (bool, error) {
+func (jm *HttpMonitor) Check(check Check) (*result.Results, error) {
 	req, err := http.NewRequest(http.MethodGet, check.Url, nil)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	for k, v := range check.Headers {
 		req.Header.Add(k, v)
@@ -23,25 +24,28 @@ func (jm *HttpMonitor) Check(check Check) (bool, error) {
 	hc.Timeout = 5 * time.Second
 	resp, err := hc.Do(req)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != check.ExpectedStatusCode {
-		return false, fmt.Errorf("invalid statuscode: %d", resp.StatusCode)
+		return nil, fmt.Errorf("invalid statuscode: %d", resp.StatusCode)
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
+	results := &result.Results{}
 	for _, contentCheck := range check.ContentChecks {
-		result, err := contentCheck.Check(ioutil.NopCloser(bytes.NewBuffer(body)))
-		if !result {
-			return false, err
-		}
+		res, err := contentCheck.Check(ioutil.NopCloser(bytes.NewBuffer(body)))
+		results.Results = append(results.Results, result.Result{
+			ContentChecker: contentCheck,
+			Result: res,
+			Err: err,
+		})
 	}
 
-	return true, nil
+	return results, nil
 }

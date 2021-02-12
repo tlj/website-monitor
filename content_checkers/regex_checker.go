@@ -1,6 +1,7 @@
 package content_checkers
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"regexp"
@@ -17,6 +18,14 @@ func NewRegexChecker(name, regex string, expectedExisting bool) *RegexChecker {
 		Name:             name,
 		Regex:            regex,
 		ExpectedExisting: expectedExisting,
+	}
+}
+
+func (c *RegexChecker) String() string {
+	if c.ExpectedExisting {
+		return fmt.Sprintf("%s - '%s' found", c.Name, c.Regex)
+	} else {
+		return fmt.Sprintf("%s - '%s' not found", c.Name, c.Regex)
 	}
 }
 

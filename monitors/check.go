@@ -31,6 +31,7 @@ type Check struct {
 	Interval            int                               `yaml:"interval"`
 }
 
+
 func (c *Check) ParseConfig() error {
 	if c.RegexExpected != "" {
 		c.ContentChecks = append(c.ContentChecks, content_checkers.NewRegexChecker(c.RegexExpected, c.RegexExpected, true))
@@ -94,16 +95,23 @@ func (c *Check) Run() error {
 	}
 	result, err := jm.Check(*c)
 	if err != nil {
-		log.Warn(err)
+		return err
 	}
-	log.Debugf("%s %s: %t", c.Name, c.Url, result)
+	if result == nil {
+		return fmt.Errorf("empty results from Check")
+	}
 
-	if result != c.LastSeenState {
+	for _, result := range result.Results {
+		log.Debugf("%s: %t (err: %v)", result.ContentChecker, result.Result, result.Err)
+	}
+
+	if result.AllTrue() != c.LastSeenState {
+		log.Debugf("%s %s: %t", c.Name, c.Url, result.AllTrue())
 		log.Infof("State change for %s: %t", c.Name, result)
-		c.LastSeenState = result
+		c.LastSeenState = result.AllTrue()
 		for _, n := range c.Notifiers {
 			log.Debugf("Sending notification...")
-			err := n.Notify(fmt.Sprintf("%s new state: %t (%s)", c.Name, result, c.DisplayUrl))
+			err := n.Notify(c.Name, c.DisplayUrl, result)
 			if err != nil {
 				log.Warn(err)
 			}

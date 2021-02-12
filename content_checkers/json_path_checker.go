@@ -1,6 +1,7 @@
 package content_checkers
 
 import (
+	"fmt"
 	"github.com/antchfx/jsonquery"
 	"io"
 )
@@ -18,6 +19,14 @@ func NewJsonPathChecker(name, path, expected string, expectedEqual bool) *JsonPa
 		path:          path,
 		expected:      expected,
 		expectedEqual: expectedEqual,
+	}
+}
+
+func (j *JsonPathChecker) String() string {
+	if j.expectedEqual {
+		return fmt.Sprintf("%s - '%s' is '%s'", j.name, j.path, j.expected)
+	} else {
+		return fmt.Sprintf("%s - '%s' is not '%s'", j.name, j.path, j.expected)
 	}
 }
 

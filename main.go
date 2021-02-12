@@ -1,11 +1,10 @@
 package main
 
 import (
+	log "github.com/sirupsen/logrus"
 	"time"
 	"website-monitor/app"
 	"website-monitor/monitors"
-
-	log "github.com/sirupsen/logrus"
 )
 
 func schedule(what func() error, delay time.Duration) chan bool {

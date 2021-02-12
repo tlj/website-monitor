@@ -1,5 +1,7 @@
 package monitors
 
+import "website-monitor/result"
+
 type Monitor interface {
-	Check(check Check) (bool, error)
+	Check(check Check) (*result.Results, error)
 }
