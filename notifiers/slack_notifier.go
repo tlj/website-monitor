@@ -45,6 +45,13 @@ func (s *SlackNotifier) Notify(name, displayUrl string, result *result.Results) 
 
 	body := SlackRequestBody{}
 	body.Text = text
+	body.Blocks = append(body.Blocks, SlackBlock{
+		Type: "section",
+		Text: SlackTextSection{
+			Type: "mrkdwn",
+			Text: text,
+		},
+	})
 	for _, r := range result.Results {
 		body.Blocks = append(body.Blocks, SlackBlock{
 			Type: "section",
