@@ -40,7 +40,7 @@ func (s *SlackNotifier) Notify(name, displayUrl string, result *result.Results) 
 	if result.AllTrue() {
 		text = fmt.Sprintf("<%s|%s> *matches* checks!", displayUrl, name)
 	} else {
-		text = fmt.Sprintf("<%s|%s> does *not* match checks!", displayUrl, name)
+		text = fmt.Sprintf("%s does *not* match checks!", name)
 	}
 
 	body := SlackRequestBody{}
