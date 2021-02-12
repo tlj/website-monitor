@@ -59,6 +59,8 @@ func (c *Check) ParseConfig() error {
 			contentCheck = content_checkers.NewJsonPathChecker(cc["name"], cc["path"], expected, expectedToExist)
 		case "Regex":
 			contentCheck = content_checkers.NewRegexChecker(cc["name"], expected, expectedToExist)
+		case "HtmlXPath":
+			contentCheck = content_checkers.NewHtmlXPathChecker(cc["name"], cc["path"], expected, expectedToExist)
 		default:
 			return fmt.Errorf("unsupported contentCheck config: %s", cc["type"])
 		}
