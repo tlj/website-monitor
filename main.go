@@ -57,6 +57,5 @@ func main() {
 		}(c)
 	}
 
-	for {
-	}
+	for { select {} }
 }
