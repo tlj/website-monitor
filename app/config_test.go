@@ -6,11 +6,12 @@ import (
 	"website-monitor/content_checkers"
 )
 
-func TestParse(t *testing.T) {
+func TestParseConfig(t *testing.T) {
 	data := []byte(`loglevel: debug
 global:
   expected_status_code: 200
   interval: 30
+  render_server_urn: "ws://localhost:9222"
   headers:
     User-Agent: "Mozilla/5.0"
   notifiers:
@@ -68,6 +69,10 @@ monitors:
 
 	if monitor.Url != monitor.DisplayUrl {
 		t.Errorf("DisplayURL was incorrect, got: %s, want: %s.", monitor.Url, monitor.DisplayUrl)
+	}
+
+	if monitor.RenderServerURN != "ws://localhost:9222" {
+		t.Errorf("RenderServerURN was incorrect, got: %s, want: %s.", monitor.RenderServerURN, "ws://localhost:9222")
 	}
 
 	if _, ok := monitor.Headers["Referer"]; !ok {

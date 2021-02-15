@@ -16,6 +16,16 @@ func (r *Results) AllTrue() bool {
 	return true
 }
 
+func (r *Results) SomeTrue() bool {
+	for _, result := range r.Results {
+		if result.Result {
+			return true
+		}
+	}
+
+	return false
+}
+
 type Result struct {
 	ContentChecker content_checkers.ContentChecker
 	Result         bool
