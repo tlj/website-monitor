@@ -1,6 +1,7 @@
 package monitors
 
 import (
+	"fmt"
 	"github.com/go-rod/rod/lib/launcher"
 	"github.com/go-rod/rod/lib/proto"
 	"time"
@@ -9,16 +10,24 @@ import (
 	"github.com/go-rod/rod"
 )
 
-type HttpRenderMonitor struct{}
+type HttpRenderMonitor struct {
+	renderServer string
+}
+
+func NewHttpRenderMonitor(renderServer string) *HttpRenderMonitor {
+	return &HttpRenderMonitor{
+		renderServer: renderServer,
+	}
+}
 
 func (jm *HttpRenderMonitor) Check(check Check) (*result.Results, error) {
-	l, err := launcher.NewRemote("ws://localhost:9222")
+	l, err := launcher.NewRemote(jm.renderServer)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error connecting to rod at %s: %s", jm.renderServer, err)
 	}
 	l.Set("window-size", "1920,1080")
 
-	r := rod.New().Client(l.Client()).Timeout(5 * time.Second)
+	r := rod.New().Client(l.Client()).Timeout(10 * time.Second)
 	if err := r.Connect(); err != nil {
 		return nil, err
 	}

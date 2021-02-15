@@ -15,6 +15,7 @@ type Config struct {
 		ExpectedStatusCode int                 `yaml:"expected_status_code"`
 		Interval           int                 `yaml:"interval"`
 		NotifiersConfig    []map[string]string `yaml:"notifiers"`
+		RenderServerURN    string              `yaml:"render_server_urn"`
 	} `yaml:"global"`
 	Monitors []monitors.Check `yaml:"monitors"`
 }
@@ -67,6 +68,9 @@ func (c *Config) ExpandMonitors() {
 		}
 		if monitor.DisplayUrl == "" {
 			c.Monitors[k].DisplayUrl = monitor.Url
+		}
+		if monitor.RenderServerURN == "" {
+			c.Monitors[k].RenderServerURN = c.Global.RenderServerURN
 		}
 		if _, ok := monitor.Headers["Referer"]; !ok {
 			if monitor.DisplayUrl != "" && monitor.Url != "" {

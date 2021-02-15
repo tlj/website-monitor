@@ -14,7 +14,7 @@ func schedule(what func() error, delay time.Duration) chan bool {
 		for {
 			err := what()
 			if err != nil {
-				log.Warn(err)
+				log.Error(err)
 			}
 			select {
 			case <-time.After(delay):

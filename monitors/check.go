@@ -19,6 +19,7 @@ type Check struct {
 	Name                string                            `yaml:"name"`
 	Url                 string                            `yaml:"url"`
 	DisplayUrl          string                            `yaml:"display_url"`
+	RenderServerURN     string                            `yaml:"render_server_urn"`
 	Type                monitorType                       `yaml:"type"`
 	Headers             map[string]string                 `yaml:"headers"`
 	RegexNotExpected    string                            `yaml:"regex_not_expected"`
@@ -90,7 +91,10 @@ func (c *Check) Run() error {
 	case HttpMonitorType:
 		jm = &HttpMonitor{}
 	case HttpRenderMonitorType:
-		jm = &HttpRenderMonitor{}
+		if c.RenderServerURN == "" {
+			log.Fatal("Config key 'render_server_urn' is missing or empty, required for http_render type monitors.")
+		}
+		jm = NewHttpRenderMonitor(c.RenderServerURN)
 	case "":
 		jm = &HttpMonitor{}
 	default:
