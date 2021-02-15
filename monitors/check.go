@@ -11,7 +11,8 @@ import (
 type monitorType string
 
 const (
-	HttpMonitorType monitorType = "http"
+	HttpMonitorType       monitorType = "http"
+	HttpRenderMonitorType monitorType = "http_render"
 )
 
 type Check struct {
@@ -30,7 +31,6 @@ type Check struct {
 	NotifiersConfig     []map[string]string               `yaml:"notifiers"`
 	Interval            int                               `yaml:"interval"`
 }
-
 
 func (c *Check) ParseConfig() error {
 	if c.RegexExpected != "" {
@@ -61,6 +61,8 @@ func (c *Check) ParseConfig() error {
 			contentCheck = content_checkers.NewRegexChecker(cc["name"], expected, expectedToExist)
 		case "HtmlXPath":
 			contentCheck = content_checkers.NewHtmlXPathChecker(cc["name"], cc["path"], expected, expectedToExist)
+		case "HtmlRenderSelector":
+			contentCheck = content_checkers.NewHtmlRenderSelectorChecker(cc["name"], cc["path"], expected, expectedToExist)
 		default:
 			return fmt.Errorf("unsupported contentCheck config: %s", cc["type"])
 		}
@@ -87,6 +89,8 @@ func (c *Check) Run() error {
 	switch c.Type {
 	case HttpMonitorType:
 		jm = &HttpMonitor{}
+	case HttpRenderMonitorType:
+		jm = &HttpRenderMonitor{}
 	case "":
 		jm = &HttpMonitor{}
 	default:

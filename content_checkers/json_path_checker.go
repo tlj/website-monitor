@@ -3,6 +3,7 @@ package content_checkers
 import (
 	"fmt"
 	"github.com/antchfx/jsonquery"
+	"github.com/go-rod/rod"
 	"io"
 )
 
@@ -56,4 +57,8 @@ func (j *JsonPathChecker) Check(r io.Reader) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (j *JsonPathChecker) CheckRender(p *rod.Page) (bool, error) {
+	panic("implement me")
 }

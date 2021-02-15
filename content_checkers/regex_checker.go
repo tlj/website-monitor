@@ -2,6 +2,7 @@ package content_checkers
 
 import (
 	"fmt"
+	"github.com/go-rod/rod"
 	"io"
 	"io/ioutil"
 	"regexp"
@@ -46,4 +47,8 @@ func (c *RegexChecker) Check(r io.Reader) (bool, error) {
 	}
 
 	return exists, nil
+}
+
+func (c *RegexChecker) CheckRender(p *rod.Page) (bool, error) {
+	panic("implement me")
 }
