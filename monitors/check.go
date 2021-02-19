@@ -40,7 +40,7 @@ type Check struct {
 	Notifiers                  []notifiers.Notifier              `yaml:"-"`
 	NotifiersConfig            []map[string]string               `yaml:"notifiers"`
 	Interval                   int                               `yaml:"interval"`
-	IntervalVariablePercentage int                               `yaml:"interval_variable_percentage"`
+	IntervalVariablePercentage *int                              `yaml:"interval_variable_percentage"`
 	Schedule                   *Schedule                         `yaml:"schedule"`
 	lastCheckedAt              time.Time                         `yaml:"-"`
 	nextCheckAt                time.Time                         `yaml:"-"`
@@ -105,25 +105,27 @@ func (c *Check) GetNextTimestampFrom(from time.Time) time.Time {
 	var hours []int
 	var days []time.Weekday
 
-	if c.Schedule.Hours != "" {
-		startEndHours := strings.Split(c.Schedule.Hours, "-")
-		startHour, _ := strconv.Atoi(startEndHours[0])
-		endHour, _ := strconv.Atoi(startEndHours[1])
-		for i := startHour; i <= endHour; i++ {
-			hours = append(hours, i)
+	if c.Schedule != nil {
+		if c.Schedule.Hours != "" {
+			startEndHours := strings.Split(c.Schedule.Hours, "-")
+			startHour, _ := strconv.Atoi(startEndHours[0])
+			endHour, _ := strconv.Atoi(startEndHours[1])
+			for i := startHour; i <= endHour; i++ {
+				hours = append(hours, i)
+			}
+		}
+
+		if c.Schedule.Days != "" {
+			startEndDays := strings.Split(c.Schedule.Days, "-")
+			startDay, _ := strconv.Atoi(startEndDays[0])
+			endDay, _ := strconv.Atoi(startEndDays[1])
+			for i := startDay; i <= endDay; i++ {
+				days = append(days, time.Weekday(i))
+			}
 		}
 	}
 
-	if c.Schedule.Days != "" {
-		startEndDays := strings.Split(c.Schedule.Days, "-")
-		startDay, _ := strconv.Atoi(startEndDays[0])
-		endDay, _ := strconv.Atoi(startEndDays[1])
-		for i := startDay; i <= endDay; i++ {
-			days = append(days, time.Weekday(i))
-		}
-	}
-
-	s := scheduler.NewScheduler(time.Duration(c.Interval) * time.Second, c.IntervalVariablePercentage, hours, days)
+	s := scheduler.NewScheduler(time.Duration(c.Interval)*time.Second, *c.IntervalVariablePercentage, hours, days)
 	to := s.CalculateNextFrom(from)
 
 	return to

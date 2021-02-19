@@ -40,7 +40,11 @@ Example:
 ```yaml
 global:
   expected_status_code: 200
-  interval: 30
+  interval: 60
+  interval_variable_percentage: 20
+  schedule:
+    days: "1-5"
+    hours: "9-16"
   headers:
     User-Agent: "Mozilla/5.0"
   notifiers:
@@ -70,6 +74,12 @@ monitors:
   - name: "Simpler config for website monitor"
     url: "https://www.monitored.website.example/simple"
     regex_expected: "Some monitored text"
+  - name: "Don't use default schedule"
+    url: "https://www.monitored.website.example/simple"
+    regex_expected: "Some monitored text"
+    interval: 3600
+    interval_variable_percentage: 0
+    schedule: {}
   - name: "JS rendered website, with css selector"
     url: "https://www.monitored.website.example/js"
     type: http_render

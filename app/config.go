@@ -11,11 +11,13 @@ import (
 type Config struct {
 	LogLevel string `yaml:"loglevel"`
 	Global   struct {
-		Headers            map[string]string   `yaml:"headers"`
-		ExpectedStatusCode int                 `yaml:"expected_status_code"`
-		Interval           int                 `yaml:"interval"`
-		NotifiersConfig    []map[string]string `yaml:"notifiers"`
-		RenderServerURN    string              `yaml:"render_server_urn"`
+		Headers                    map[string]string   `yaml:"headers"`
+		ExpectedStatusCode         int                 `yaml:"expected_status_code"`
+		Interval                   int                 `yaml:"interval"`
+		IntervalVariablePercentage *int                `yaml:"interval_variable_percentage"`
+		NotifiersConfig            []map[string]string `yaml:"notifiers"`
+		RenderServerURN            string              `yaml:"render_server_urn"`
+		Schedule                   *monitors.Schedule  `yaml:"schedule"`
 	} `yaml:"global"`
 	Monitors []*monitors.Check `yaml:"monitors"`
 }
@@ -54,6 +56,16 @@ func (c *Config) ExpandMonitors() {
 		}
 		if monitor.Interval == 0 {
 			c.Monitors[k].Interval = c.Global.Interval
+		}
+		if monitor.IntervalVariablePercentage == nil {
+			if c.Global.IntervalVariablePercentage != nil {
+				c.Monitors[k].IntervalVariablePercentage = c.Global.IntervalVariablePercentage
+			}
+		}
+		if monitor.Schedule == nil {
+			if c.Global.Schedule != nil {
+				c.Monitors[k].Schedule = c.Global.Schedule
+			}
 		}
 		if monitor.ExpectedStatusCode == 0 {
 			c.Monitors[k].ExpectedStatusCode = c.Global.ExpectedStatusCode
