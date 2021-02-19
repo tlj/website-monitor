@@ -4,11 +4,8 @@ name: build-and-push
 
 on:
   push:
-    branches:
-      - master
     tags:
       - 'v*'
-  pull_request:
 
 jobs:
   multi:
@@ -24,6 +21,9 @@ jobs:
         uses: crazy-max/ghaction-docker-meta@v1
         with:
           images: thomaslandro/website-monitor
+          tag-semver: |
+            {{version}}
+            {{major}}.{{minor}}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -46,3 +46,10 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
+
+      - name: Update repo description
+        uses: peter-evans/dockerhub-description@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: thomaslandro/website-monitor
