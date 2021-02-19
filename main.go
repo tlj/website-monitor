@@ -7,26 +7,6 @@ import (
 	"website-monitor/monitors"
 )
 
-func schedule(what func() error, delay time.Duration) chan bool {
-	stop := make(chan bool)
-
-	go func() {
-		for {
-			err := what()
-			if err != nil {
-				log.Error(err)
-			}
-			select {
-			case <-time.After(delay):
-			case <-stop:
-				return
-			}
-		}
-	}()
-
-	return stop
-}
-
 func main() {
 	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
 	log.SetLevel(log.InfoLevel)
@@ -50,12 +30,34 @@ func main() {
 	checks := config.Monitors
 	log.Infof("Starting %d checks...", len(checks))
 
-	for _, c := range checks {
-		log.Infof("Starting %s interval %ds", c.Name, c.Interval)
-		go func(che monitors.Check) {
-			schedule(che.Run, time.Duration(che.Interval)*time.Second)
-		}(c)
-	}
+	queue := make(chan *monitors.Check, 10)
 
-	for { select {} }
+	go func() {
+		t := time.NewTimer(1 * time.Second)
+		for {
+			select {
+				case <- t.C:
+					log.Println("Looking for job...")
+					for _, c := range checks {
+						if c.ShouldUpdate() {
+							log.Printf("Should check %s...", c.Name)
+							c.CheckPending = true
+							queue <- c
+						}
+					}
+					t.Reset(1 * time.Second)
+			}
+		}
+	}()
+
+	for {
+		select {
+		case c := <- queue:
+			go func(ch *monitors.Check) {
+				if err := ch.Run(); err != nil {
+					log.Println(err)
+				}
+			}(c)
+		}
+	}
 }

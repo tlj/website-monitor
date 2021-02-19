@@ -17,7 +17,7 @@ type Config struct {
 		NotifiersConfig    []map[string]string `yaml:"notifiers"`
 		RenderServerURN    string              `yaml:"render_server_urn"`
 	} `yaml:"global"`
-	Monitors []monitors.Check `yaml:"monitors"`
+	Monitors []*monitors.Check `yaml:"monitors"`
 }
 
 func LoadConfig(filename string) (*Config, error) {

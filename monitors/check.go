@@ -2,8 +2,12 @@ package monitors
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
 	"website-monitor/content_checkers"
 	"website-monitor/notifiers"
+	"website-monitor/scheduler"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -15,22 +19,32 @@ const (
 	HttpRenderMonitorType monitorType = "http_render"
 )
 
+type Schedule struct {
+	Days  string `yaml:"days"`
+	Hours string `yaml:"hours"`
+}
+
 type Check struct {
-	Name                string                            `yaml:"name"`
-	Url                 string                            `yaml:"url"`
-	DisplayUrl          string                            `yaml:"display_url"`
-	RenderServerURN     string                            `yaml:"render_server_urn"`
-	Type                monitorType                       `yaml:"type"`
-	Headers             map[string]string                 `yaml:"headers"`
-	RegexNotExpected    string                            `yaml:"regex_not_expected"`
-	RegexExpected       string                            `yaml:"regex_expected"`
-	ExpectedStatusCode  int                               `yaml:"expected_status_code"`
-	ContentChecks       []content_checkers.ContentChecker `yaml:"-"`
-	LastSeenState       bool                              `yaml:"last_seen_state"`
-	ContentChecksConfig []map[string]string               `yaml:"content_checks"`
-	Notifiers           []notifiers.Notifier              `yaml:"-"`
-	NotifiersConfig     []map[string]string               `yaml:"notifiers"`
-	Interval            int                               `yaml:"interval"`
+	Name                       string                            `yaml:"name"`
+	Url                        string                            `yaml:"url"`
+	DisplayUrl                 string                            `yaml:"display_url"`
+	RenderServerURN            string                            `yaml:"render_server_urn"`
+	Type                       monitorType                       `yaml:"type"`
+	Headers                    map[string]string                 `yaml:"headers"`
+	RegexNotExpected           string                            `yaml:"regex_not_expected"`
+	RegexExpected              string                            `yaml:"regex_expected"`
+	ExpectedStatusCode         int                               `yaml:"expected_status_code"`
+	ContentChecks              []content_checkers.ContentChecker `yaml:"-"`
+	LastSeenState              bool                              `yaml:"last_seen_state"`
+	ContentChecksConfig        []map[string]string               `yaml:"content_checks"`
+	Notifiers                  []notifiers.Notifier              `yaml:"-"`
+	NotifiersConfig            []map[string]string               `yaml:"notifiers"`
+	Interval                   int                               `yaml:"interval"`
+	IntervalVariablePercentage int                               `yaml:"interval_variable_percentage"`
+	Schedule                   *Schedule                         `yaml:"schedule"`
+	lastCheckedAt              time.Time                         `yaml:"-"`
+	nextCheckAt                time.Time                         `yaml:"-"`
+	CheckPending               bool                              `yaml:"-"`
 }
 
 func (c *Check) ParseConfig() error {
@@ -82,10 +96,58 @@ func (c *Check) ParseConfig() error {
 		c.Notifiers = append(c.Notifiers, notifier)
 	}
 
+	c.nextCheckAt = time.Now().UTC()
+
 	return nil
 }
 
+func (c *Check) GetNextTimestampFrom(from time.Time) time.Time {
+	var hours []int
+	var days []time.Weekday
+
+	if c.Schedule.Hours != "" {
+		startEndHours := strings.Split(c.Schedule.Hours, "-")
+		startHour, _ := strconv.Atoi(startEndHours[0])
+		endHour, _ := strconv.Atoi(startEndHours[1])
+		for i := startHour; i <= endHour; i++ {
+			hours = append(hours, i)
+		}
+	}
+
+	if c.Schedule.Days != "" {
+		startEndDays := strings.Split(c.Schedule.Days, "-")
+		startDay, _ := strconv.Atoi(startEndDays[0])
+		endDay, _ := strconv.Atoi(startEndDays[1])
+		for i := startDay; i <= endDay; i++ {
+			days = append(days, time.Weekday(i))
+		}
+	}
+
+	s := scheduler.NewScheduler(time.Duration(c.Interval) * time.Second, c.IntervalVariablePercentage, hours, days)
+	to := s.CalculateNextFrom(from)
+
+	return to
+}
+
+func (c *Check) updateTimestamps() {
+	c.lastCheckedAt = time.Now().UTC()
+	c.nextCheckAt = c.GetNextTimestampFrom(c.lastCheckedAt)
+	log.Printf("Next: %s (in %ds)", c.nextCheckAt.String(), int(c.nextCheckAt.Sub(time.Now()).Seconds()))
+
+	c.CheckPending = false
+}
+
+func (c *Check) ShouldUpdate() bool {
+	if !c.CheckPending && c.nextCheckAt.Sub(time.Now()) <= 0 {
+		return true
+	}
+
+	return false
+}
+
 func (c *Check) Run() error {
+	defer c.updateTimestamps()
+
 	var jm Monitor
 	switch c.Type {
 	case HttpMonitorType:
