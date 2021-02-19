@@ -9,5 +9,6 @@ import (
 type ContentChecker interface {
 	Check(r io.Reader) (bool, error)
 	CheckRender(p *rod.Page) (bool, error)
+	Type() string
 	fmt.Stringer
 }

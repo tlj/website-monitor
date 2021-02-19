@@ -62,3 +62,7 @@ func (j *HtmlXPathChecker) Check(r io.Reader) (bool, error) {
 func (j *HtmlXPathChecker) CheckRender(p *rod.Page) (bool, error) {
 	panic("implement me")
 }
+
+func (j *HtmlXPathChecker) Type() string {
+	return "HtmlXPathChecker"
+}

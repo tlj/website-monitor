@@ -8,17 +8,19 @@ import (
 	"website-monitor/monitors"
 )
 
+type ConfigGlobal struct {
+	Headers                    map[string]string   `yaml:"headers"`
+	ExpectedStatusCode         int                 `yaml:"expected_status_code"`
+	Interval                   int                 `yaml:"interval"`
+	IntervalVariablePercentage *int                `yaml:"interval_variable_percentage"`
+	NotifiersConfig            []map[string]string `yaml:"notifiers"`
+	RenderServerURN            string              `yaml:"render_server_urn"`
+	Schedule                   *monitors.Schedule  `yaml:"schedule"`
+}
+
 type Config struct {
-	LogLevel string `yaml:"loglevel"`
-	Global   struct {
-		Headers                    map[string]string   `yaml:"headers"`
-		ExpectedStatusCode         int                 `yaml:"expected_status_code"`
-		Interval                   int                 `yaml:"interval"`
-		IntervalVariablePercentage *int                `yaml:"interval_variable_percentage"`
-		NotifiersConfig            []map[string]string `yaml:"notifiers"`
-		RenderServerURN            string              `yaml:"render_server_urn"`
-		Schedule                   *monitors.Schedule  `yaml:"schedule"`
-	} `yaml:"global"`
+	LogLevel string            `yaml:"loglevel"`
+	Global   ConfigGlobal      `yaml:"global"`
 	Monitors []*monitors.Check `yaml:"monitors"`
 }
 

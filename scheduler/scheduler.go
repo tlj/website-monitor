@@ -8,12 +8,12 @@ import (
 
 type Scheduler struct {
 	interval                    time.Duration
-	intervalVariationPercentage int
+	intervalVariationPercentage *int
 	hours                       []int
 	days                        []time.Weekday
 }
 
-func NewScheduler(interval time.Duration, intervalVariationPercentage int, hours []int, days []time.Weekday) *Scheduler {
+func NewScheduler(interval time.Duration, intervalVariationPercentage *int, hours []int, days []time.Weekday) *Scheduler {
 	s := &Scheduler{
 		interval:                    interval,
 		intervalVariationPercentage: intervalVariationPercentage,
@@ -100,9 +100,9 @@ func (s *Scheduler) NextHour(from time.Time) time.Time {
 func (s *Scheduler) CalculateNextFrom(from time.Time) time.Time {
 	incBy := int(s.interval.Seconds())
 
-	if s.intervalVariationPercentage > 0 {
+	if s.intervalVariationPercentage != nil && *s.intervalVariationPercentage > 0 {
 		var p float64
-		p = float64(incBy) * (float64(s.intervalVariationPercentage) / 100)
+		p = float64(incBy) * (float64(*s.intervalVariationPercentage) / 100)
 		min := incBy - int(p)
 		max := incBy + int(p)
 		rand.Seed(time.Now().UnixNano())

@@ -62,3 +62,7 @@ func (j *JsonPathChecker) Check(r io.Reader) (bool, error) {
 func (j *JsonPathChecker) CheckRender(p *rod.Page) (bool, error) {
 	panic("implement me")
 }
+
+func (j *JsonPathChecker) Type() string {
+	return "JsonPathChecker"
+}

@@ -96,8 +96,6 @@ func (c *Check) ParseConfig() error {
 		c.Notifiers = append(c.Notifiers, notifier)
 	}
 
-	c.nextCheckAt = time.Now().UTC()
-
 	return nil
 }
 
@@ -125,7 +123,7 @@ func (c *Check) GetNextTimestampFrom(from time.Time) time.Time {
 		}
 	}
 
-	s := scheduler.NewScheduler(time.Duration(c.Interval)*time.Second, *c.IntervalVariablePercentage, hours, days)
+	s := scheduler.NewScheduler(time.Duration(c.Interval)*time.Second, c.IntervalVariablePercentage, hours, days)
 	to := s.CalculateNextFrom(from)
 
 	return to

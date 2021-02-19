@@ -57,7 +57,7 @@ func Test(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			s := scheduler.NewScheduler(
 				test.interval,
-				0,
+				nil,
 				test.hours,
 				test.days,
 			)
@@ -119,7 +119,7 @@ func TestScheduler_IsWithinSchedule(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			s := scheduler.NewScheduler(
 				0,
-				0,
+				nil,
 				test.hours,
 				test.days,
 			)

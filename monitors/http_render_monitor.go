@@ -53,3 +53,7 @@ func (jm *HttpRenderMonitor) Check(check Check) (*result.Results, error) {
 
 	return results, nil
 }
+
+func (jm *HttpRenderMonitor) Type() string {
+	return "HttpRenderMonitor"
+}

@@ -64,3 +64,7 @@ func (h *HtmlRenderSelectorChecker) String() string {
 		return fmt.Sprintf("%s - '%s' is not '%s'", h.name, h.path, h.expected)
 	}
 }
+
+func (h *HtmlRenderSelectorChecker) Type() string {
+	return "HtmlRenderSelectorChecker"
+}

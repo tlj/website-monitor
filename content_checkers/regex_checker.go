@@ -52,3 +52,7 @@ func (c *RegexChecker) Check(r io.Reader) (bool, error) {
 func (c *RegexChecker) CheckRender(p *rod.Page) (bool, error) {
 	panic("implement me")
 }
+
+func (c *RegexChecker) Type() string {
+	return "RegexChecker"
+}

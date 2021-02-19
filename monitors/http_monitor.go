@@ -49,3 +49,7 @@ func (jm *HttpMonitor) Check(check Check) (*result.Results, error) {
 
 	return results, nil
 }
+
+func (jm *HttpMonitor) Type() string {
+	return "HttpMonitor"
+}
