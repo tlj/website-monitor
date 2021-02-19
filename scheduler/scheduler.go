@@ -1,7 +1,6 @@
 package scheduler
 
 import (
-	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"sort"
 	"time"
@@ -16,10 +15,10 @@ type Scheduler struct {
 
 func NewScheduler(interval time.Duration, intervalVariationPercentage int, hours []int, days []time.Weekday) *Scheduler {
 	s := &Scheduler{
-		interval: interval,
+		interval:                    interval,
 		intervalVariationPercentage: intervalVariationPercentage,
-		hours: hours,
-		days: days,
+		hours:                       hours,
+		days:                        days,
 	}
 	sort.Ints(s.hours)
 
@@ -81,7 +80,7 @@ func (s *Scheduler) NextDay(from time.Time) time.Time {
 func (s *Scheduler) NextHour(from time.Time) time.Time {
 	to := from
 
-	if from.Hour() > s.hours[len(s.hours) - 1] {
+	if from.Hour() > s.hours[len(s.hours)-1] {
 		to = s.NextDay(to)
 	}
 
@@ -99,19 +98,18 @@ func (s *Scheduler) NextHour(from time.Time) time.Time {
 }
 
 func (s *Scheduler) CalculateNextFrom(from time.Time) time.Time {
-	incBy := s.interval.Seconds()
+	incBy := int(s.interval.Seconds())
 
 	if s.intervalVariationPercentage > 0 {
 		var p float64
-		p = incBy * (float64(s.intervalVariationPercentage) / 100)
-		min := incBy - p
-		max := incBy + p
+		p = float64(incBy) * (float64(s.intervalVariationPercentage) / 100)
+		min := incBy - int(p)
+		max := incBy + int(p)
 		rand.Seed(time.Now().UnixNano())
-		iv := rand.Intn(int(max)-int(min)+1) + int(min)
-		log.Printf("delay %d...", iv)
+		incBy = rand.Intn(max - min+1) + min
 	}
 
-	to := from.Add(s.interval)
+	to := from.Add(time.Duration(incBy) * time.Second)
 
 	if s.IsWithinSchedule(to) {
 		return to

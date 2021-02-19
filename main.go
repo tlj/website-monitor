@@ -37,10 +37,10 @@ func main() {
 		for {
 			select {
 				case <- t.C:
-					log.Println("Looking for job...")
+					log.Debug("Looking for job...")
 					for _, c := range checks {
 						if c.ShouldUpdate() {
-							log.Printf("Should check %s...", c.Name)
+							log.Infof("Queuing %s...", c.Name)
 							c.CheckPending = true
 							queue <- c
 						}
@@ -55,7 +55,7 @@ func main() {
 		case c := <- queue:
 			go func(ch *monitors.Check) {
 				if err := ch.Run(); err != nil {
-					log.Println(err)
+					log.Errorf("Error in %s: %v", ch.Name, err)
 				}
 			}(c)
 		}

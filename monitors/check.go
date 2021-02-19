@@ -132,7 +132,7 @@ func (c *Check) GetNextTimestampFrom(from time.Time) time.Time {
 func (c *Check) updateTimestamps() {
 	c.lastCheckedAt = time.Now().UTC()
 	c.nextCheckAt = c.GetNextTimestampFrom(c.lastCheckedAt)
-	log.Printf("Next: %s (in %ds)", c.nextCheckAt.String(), int(c.nextCheckAt.Sub(time.Now()).Seconds()))
+	log.Debugf("%s next run: %s (in %ds)", c.Name, c.nextCheckAt.String(), int(c.nextCheckAt.Sub(time.Now()).Seconds()))
 
 	c.CheckPending = false
 }
