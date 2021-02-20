@@ -65,6 +65,9 @@ func (s *Scheduler) NextDay(from time.Time) time.Time {
 		return time.Date(to.Year(), to.Month(), to.Day(), 00, 00, 00, 00, time.UTC)
 	}
 
+	to = to.Add(24 * time.Hour)
+	to = time.Date(to.Year(), to.Month(), to.Day(), 00, 00, 00, 00, time.UTC)
+
 	if !s.IsWithinDays(to) {
 		for {
 			to = to.Add(24 * time.Hour)

@@ -52,6 +52,14 @@ func Test(t *testing.T) {
 			days:     []time.Weekday{time.Monday, time.Tuesday},
 			expected: time.Date(2021, 02, 22, 07, 00, 00, 00, time.UTC),
 		},
+		{
+			name:     "interval after hours, just",
+			from:     time.Date(2021, 02, 19, 20, 00, 00, 00, time.UTC),
+			interval: 1 * time.Hour,
+			hours:    []int{7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+			days:     []time.Weekday{time.Monday, time.Tuesday, time.Wednesday, time.Thursday, time.Friday},
+			expected: time.Date(2021, 02, 22, 07, 00, 00, 00, time.UTC),
+		},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
