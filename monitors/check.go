@@ -2,8 +2,6 @@ package monitors
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
 	"time"
 	"website-monitor/content_checkers"
 	"website-monitor/notifiers"
@@ -12,49 +10,33 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type monitorType string
+type MonitorType string
 
 const (
-	HttpMonitorType       monitorType = "http"
-	HttpRenderMonitorType monitorType = "http_render"
+	HttpMonitorType       MonitorType = "http"
+	HttpRenderMonitorType MonitorType = "http_render"
 )
 
-type Schedule struct {
-	Days  string `yaml:"days"`
-	Hours string `yaml:"hours"`
-}
-
 type Check struct {
-	Name                       string                            `yaml:"name"`
-	Url                        string                            `yaml:"url"`
-	DisplayUrl                 string                            `yaml:"display_url"`
-	RenderServerURN            string                            `yaml:"render_server_urn"`
-	Type                       monitorType                       `yaml:"type"`
-	Headers                    map[string]string                 `yaml:"headers"`
-	RegexNotExpected           string                            `yaml:"regex_not_expected"`
-	RegexExpected              string                            `yaml:"regex_expected"`
-	ExpectedStatusCode         int                               `yaml:"expected_status_code"`
-	ContentChecks              []content_checkers.ContentChecker `yaml:"-"`
-	LastSeenState              bool                              `yaml:"last_seen_state"`
-	ContentChecksConfig        []map[string]string               `yaml:"content_checks"`
-	Notifiers                  []notifiers.Notifier              `yaml:"-"`
-	NotifiersConfig            []map[string]string               `yaml:"notifiers"`
-	Interval                   int                               `yaml:"interval"`
-	IntervalVariablePercentage *int                              `yaml:"interval_variable_percentage"`
-	Schedule                   *Schedule                         `yaml:"schedule"`
-	lastCheckedAt              time.Time                         `yaml:"-"`
-	nextCheckAt                time.Time                         `yaml:"-"`
-	CheckPending               bool                              `yaml:"-"`
+	Name               string
+	Url                string
+	DisplayUrl         string
+	RenderServerURN    string
+	Type               MonitorType
+	Headers            map[string]string
+	ExpectedStatusCode int
+	ContentChecks      []content_checkers.ContentChecker
+	Notifiers          []notifiers.Notifier
+	Scheduler          *scheduler.Scheduler
+	LastSeenState      bool
+	lastCheckedAt      time.Time
+	nextCheckAt        time.Time
+	CheckPending       bool
 }
 
+/*
 func (c *Check) ParseConfig() error {
-	if c.RegexExpected != "" {
-		c.ContentChecks = append(c.ContentChecks, content_checkers.NewRegexChecker(c.RegexExpected, c.RegexExpected, true))
-	}
 
-	if c.RegexNotExpected != "" {
-		c.ContentChecks = append(c.ContentChecks, content_checkers.NewRegexChecker(c.RegexNotExpected, c.RegexNotExpected, false))
-	}
 
 	for _, cc := range c.ContentChecksConfig {
 		var expected string
@@ -85,53 +67,16 @@ func (c *Check) ParseConfig() error {
 		c.ContentChecks = append(c.ContentChecks, contentCheck)
 	}
 
-	for _, n := range c.NotifiersConfig {
-		var notifier notifiers.Notifier
-		switch n["type"] {
-		case "slack":
-			notifier = notifiers.NewSlackNotifier(n["webhook"])
-		default:
-			return fmt.Errorf("unsupported notifiers config: %s", n["type"])
-		}
-		c.Notifiers = append(c.Notifiers, notifier)
-	}
 
 	return nil
 }
 
-func (c *Check) GetNextTimestampFrom(from time.Time) time.Time {
-	var hours []int
-	var days []time.Weekday
+ */
 
-	if c.Schedule != nil {
-		if c.Schedule.Hours != "" {
-			startEndHours := strings.Split(c.Schedule.Hours, "-")
-			startHour, _ := strconv.Atoi(startEndHours[0])
-			endHour, _ := strconv.Atoi(startEndHours[1])
-			for i := startHour; i <= endHour; i++ {
-				hours = append(hours, i)
-			}
-		}
-
-		if c.Schedule.Days != "" {
-			startEndDays := strings.Split(c.Schedule.Days, "-")
-			startDay, _ := strconv.Atoi(startEndDays[0])
-			endDay, _ := strconv.Atoi(startEndDays[1])
-			for i := startDay; i <= endDay; i++ {
-				days = append(days, time.Weekday(i))
-			}
-		}
-	}
-
-	s := scheduler.NewScheduler(time.Duration(c.Interval)*time.Second, c.IntervalVariablePercentage, hours, days)
-	to := s.CalculateNextFrom(from)
-
-	return to
-}
 
 func (c *Check) updateTimestamps() {
 	c.lastCheckedAt = time.Now().UTC()
-	c.nextCheckAt = c.GetNextTimestampFrom(c.lastCheckedAt)
+	c.nextCheckAt = c.Scheduler.CalculateNextFrom(c.lastCheckedAt)
 	log.Debugf("%s next run: %s (in %ds)", c.Name, c.nextCheckAt.String(), int(c.nextCheckAt.Sub(time.Now()).Seconds()))
 
 	c.CheckPending = false

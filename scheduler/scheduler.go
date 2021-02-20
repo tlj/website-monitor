@@ -2,6 +2,7 @@ package scheduler
 
 import (
 	"math/rand"
+	"reflect"
 	"sort"
 	"time"
 )
@@ -124,4 +125,31 @@ func (s *Scheduler) CalculateNextFrom(from time.Time) time.Time {
 	}
 
 	return to
+}
+
+func (s *Scheduler) Equal(y *Scheduler) bool {
+	if s.interval != y.interval {
+		return false
+	}
+
+	if s.intervalVariationPercentage == nil && y.intervalVariationPercentage != nil {
+		return false
+	}
+
+	if s.intervalVariationPercentage != nil && y.intervalVariationPercentage == nil {
+		return false
+	}
+
+	if *s.intervalVariationPercentage != *y.intervalVariationPercentage {
+		return false
+	}
+
+	if !reflect.DeepEqual(s.days, y.days) {
+		return false
+	}
+	if !reflect.DeepEqual(s.hours, y.hours) {
+		return false
+	}
+
+	return true
 }

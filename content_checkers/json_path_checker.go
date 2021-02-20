@@ -66,3 +66,7 @@ func (j *JsonPathChecker) CheckRender(p *rod.Page) (bool, error) {
 func (j *JsonPathChecker) Type() string {
 	return "JsonPathChecker"
 }
+
+func (j *JsonPathChecker) Equal(y *JsonPathChecker) bool {
+	return j.name == y.name && j.path == y.path && j.expected == y.expected && j.expectedEqual == y.expectedEqual
+}

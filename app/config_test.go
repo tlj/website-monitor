@@ -3,10 +3,12 @@ package app_test
 import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"testing"
+	"time"
 	"website-monitor/app"
 	"website-monitor/content_checkers"
 	"website-monitor/monitors"
 	"website-monitor/notifiers"
+	"website-monitor/scheduler"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -58,32 +60,25 @@ monitors:
 
 	expectedIntervalVariable := 20
 	zeroInt := 0
+	defaultSchedule := scheduler.NewScheduler(
+		30*time.Second,
+		&expectedIntervalVariable,
+		[]int{10, 11, 12, 13, 14, 15, 16, 17},
+		[]time.Weekday{time.Monday, time.Tuesday, time.Wednesday, time.Thursday, time.Friday},
+	)
 	expectedCfg := &app.Config{
 		LogLevel: "debug",
-		Global: app.ConfigGlobal{
-			Headers:                    map[string]string{"User-Agent": "Mozilla/5.0"},
-			ExpectedStatusCode:         200,
-			Interval:                   30,
-			IntervalVariablePercentage: &expectedIntervalVariable,
-			RenderServerURN:            "ws://localhost:9222",
-			Schedule: &monitors.Schedule{
-				Days:  "1-5",
-				Hours: "10-17",
-			},
-		},
 		Monitors: []*monitors.Check{
 			{
 				Name:               "A regex expected monitor with default settings",
 				Url:                "https://monitor.example/expected",
 				DisplayUrl:         "https://monitor.example/expected",
 				RenderServerURN:    "ws://localhost:9222",
+				Type:               monitors.HttpMonitorType,
 				Headers:            map[string]string{"Referer": "https://monitor.example/expected", "User-Agent": "Mozilla/5.0"},
-				RegexExpected:      "Expected test",
 				ExpectedStatusCode: 200,
-				Notifiers:          []notifiers.Notifier{&notifiers.SlackNotifier{WebhookUrl: "https://hooks.slack.com/services/1/2/3"}},
-				Interval:                   30,
-				IntervalVariablePercentage: &expectedIntervalVariable,
-				Schedule:                   &monitors.Schedule{Days: "1-5", Hours: "10-17"},
+				Notifiers:          []notifiers.Notifier{notifiers.NewSlackNotifier("https://hooks.slack.com/services/1/2/3")},
+				Scheduler:          defaultSchedule,
 				ContentChecks: []content_checkers.ContentChecker{
 					content_checkers.NewRegexChecker("Expected test", "Expected test", true),
 				},
@@ -93,12 +88,11 @@ monitors:
 				Url:                "https://monitor.example/expected",
 				DisplayUrl:         "https://monitor.example/expected",
 				RenderServerURN:    "ws://localhost:9222",
+				Type:               monitors.HttpMonitorType,
 				Headers:            map[string]string{"Referer": "https://monitor.example/expected", "User-Agent": "Mozilla/5.0"},
 				ExpectedStatusCode: 200,
-				Notifiers:          []notifiers.Notifier{&notifiers.SlackNotifier{WebhookUrl: "https://hooks.slack.com/services/1/2/3"}},
-				Interval:                   30,
-				IntervalVariablePercentage: &expectedIntervalVariable,
-				Schedule:                   &monitors.Schedule{Days: "1-5", Hours: "10-17"},
+				Notifiers:          []notifiers.Notifier{notifiers.NewSlackNotifier("https://hooks.slack.com/services/1/2/3")},
+				Scheduler:          defaultSchedule,
 				ContentChecks: []content_checkers.ContentChecker{
 					content_checkers.NewRegexChecker("Expected test", "Expected test", true),
 				},
@@ -109,12 +103,10 @@ monitors:
 				DisplayUrl:         "https://monitor.example/expected",
 				RenderServerURN:    "ws://localhost:9222",
 				Headers:            map[string]string{"Referer": "https://monitor.example/expected", "User-Agent": "Mozilla/5.0"},
-				RegexExpected:      "Expected test",
 				ExpectedStatusCode: 200,
-				Notifiers:          []notifiers.Notifier{&notifiers.SlackNotifier{WebhookUrl: "https://hooks.slack.com/services/1/2/3"}},
-				Interval:                   30,
-				IntervalVariablePercentage: &expectedIntervalVariable,
-				Schedule:                   &monitors.Schedule{},
+				Type:               monitors.HttpMonitorType,
+				Notifiers:          []notifiers.Notifier{notifiers.NewSlackNotifier("https://hooks.slack.com/services/1/2/3")},
+				Scheduler:          scheduler.NewScheduler(time.Duration(30) * time.Second, &expectedIntervalVariable, nil, nil),
 				ContentChecks: []content_checkers.ContentChecker{
 					content_checkers.NewRegexChecker("Expected test", "Expected test", true),
 				},
@@ -125,12 +117,15 @@ monitors:
 				DisplayUrl:         "https://monitor.example/expected",
 				RenderServerURN:    "ws://localhost:9222",
 				Headers:            map[string]string{"Referer": "https://monitor.example/expected", "User-Agent": "Mozilla/5.0"},
-				RegexExpected:      "Expected test",
 				ExpectedStatusCode: 200,
-				Notifiers:          []notifiers.Notifier{&notifiers.SlackNotifier{WebhookUrl: "https://hooks.slack.com/services/1/2/3"}},
-				Interval:                   60,
-				IntervalVariablePercentage: &zeroInt,
-				Schedule:                   &monitors.Schedule{Days: "1-5", Hours: "10-17"},
+				Type:               monitors.HttpMonitorType,
+				Notifiers:          []notifiers.Notifier{notifiers.NewSlackNotifier("https://hooks.slack.com/services/1/2/3")},
+				Scheduler: scheduler.NewScheduler(
+					time.Duration(60)*time.Second,
+					&zeroInt,
+					[]int{10, 11, 12, 13, 14, 15, 16, 17},
+					[]time.Weekday{time.Monday, time.Tuesday, time.Wednesday, time.Thursday, time.Friday},
+				),
 				ContentChecks: []content_checkers.ContentChecker{
 					content_checkers.NewRegexChecker("Expected test", "Expected test", true),
 				},
@@ -141,14 +136,12 @@ monitors:
 				DisplayUrl:         "https://monitor.example/httprender",
 				RenderServerURN:    "ws://localhost:9222",
 				Headers:            map[string]string{"Referer": "https://monitor.example/httprender", "User-Agent": "Mozilla/5.0"},
-				Type:               "http_render",
+				Type:               monitors.HttpRenderMonitorType,
 				ExpectedStatusCode: 200,
-				Notifiers:          []notifiers.Notifier{&notifiers.SlackNotifier{WebhookUrl: "https://hooks.slack.com/services/1/2/3"}},
-				Interval:                   30,
-				IntervalVariablePercentage: &expectedIntervalVariable,
-				Schedule:                   &monitors.Schedule{Days: "1-5", Hours: "10-17"},
+				Notifiers:          []notifiers.Notifier{notifiers.NewSlackNotifier("https://hooks.slack.com/services/1/2/3")},
+				Scheduler:          defaultSchedule,
 				ContentChecks: []content_checkers.ContentChecker{
-					content_checkers.NewHtmlRenderSelectorChecker("Css Selector Check", "html h1", "Expected header", true),
+					content_checkers.NewHtmlRenderSelectorChecker("Css Selector Check", "html h1", "Expected header", false),
 				},
 			},
 		},
@@ -163,10 +156,11 @@ monitors:
 	diff := cmp.Diff(
 		cfg,
 		expectedCfg,
-		cmpopts.IgnoreUnexported(content_checkers.HtmlRenderSelectorChecker{}, monitors.Check{}),
-		cmpopts.IgnoreFields(monitors.Check{}, "ContentChecksConfig", "NotifiersConfig"),
-		cmpopts.IgnoreFields(app.ConfigGlobal{}, "NotifiersConfig"),
-		)
+		cmpopts.IgnoreUnexported(scheduler.Scheduler{}, monitors.Check{}, content_checkers.HtmlRenderSelectorChecker{}),
+		//cmpopts.IgnoreUnexported(content_checkers.HtmlRenderSelectorChecker{}, monitors.Check{}),
+		//cmpopts.IgnoreFields(monitors.Check{}, "ContentChecksConfig", "NotifiersConfig"),
+		//cmpopts.IgnoreFields(app.ConfigGlobal{}, "NotifiersConfig"),
+	)
 	if diff != "" {
 		t.Error(diff)
 	}

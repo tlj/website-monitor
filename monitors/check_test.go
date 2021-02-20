@@ -6,9 +6,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 	"website-monitor/content_checkers"
 	"website-monitor/monitors"
 	"website-monitor/notifiers"
+	"website-monitor/scheduler"
 )
 
 func TestHttpMonitor_CheckNotification(t *testing.T) {
@@ -20,6 +22,7 @@ func TestHttpMonitor_CheckNotification(t *testing.T) {
 		}))
 	defer slackServer.Close()
 
+	intZero := 0
 	tests := []struct {
 		name              string
 		check             monitors.Check
@@ -36,6 +39,7 @@ func TestHttpMonitor_CheckNotification(t *testing.T) {
 				Notifiers: []notifiers.Notifier{
 					notifiers.NewSlackNotifier(slackServer.URL),
 				},
+				Scheduler: scheduler.NewScheduler(time.Duration(30) * time.Second, &intZero, nil, nil),
 				LastSeenState: false,
 			},
 			notificationCount: 1,
@@ -51,6 +55,7 @@ func TestHttpMonitor_CheckNotification(t *testing.T) {
 				Notifiers: []notifiers.Notifier{
 					notifiers.NewSlackNotifier(slackServer.URL),
 				},
+				Scheduler: scheduler.NewScheduler(time.Duration(30) * time.Second, &intZero, nil, nil),
 				LastSeenState: true,
 			},
 			notificationCount: 0,

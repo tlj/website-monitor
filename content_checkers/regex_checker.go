@@ -9,24 +9,24 @@ import (
 )
 
 type RegexChecker struct {
-	Name             string
-	Regex            string
-	ExpectedExisting bool
+	name             string
+	regex            string
+	expectedExisting bool
 }
 
 func NewRegexChecker(name, regex string, expectedExisting bool) *RegexChecker {
 	return &RegexChecker{
-		Name:             name,
-		Regex:            regex,
-		ExpectedExisting: expectedExisting,
+		name:             name,
+		regex:            regex,
+		expectedExisting: expectedExisting,
 	}
 }
 
 func (c *RegexChecker) String() string {
-	if c.ExpectedExisting {
-		return fmt.Sprintf("%s - '%s' found", c.Name, c.Regex)
+	if c.expectedExisting {
+		return fmt.Sprintf("%s - '%s' found", c.name, c.regex)
 	} else {
-		return fmt.Sprintf("%s - '%s' not found", c.Name, c.Regex)
+		return fmt.Sprintf("%s - '%s' not found", c.name, c.regex)
 	}
 }
 
@@ -36,13 +36,13 @@ func (c *RegexChecker) Check(r io.Reader) (bool, error) {
 		return false, err
 	}
 
-	rx, err := regexp.Compile(c.Regex)
+	rx, err := regexp.Compile(c.regex)
 	if err != nil {
 		return false, err
 	}
 
 	exists := rx.Match(data)
-	if !c.ExpectedExisting {
+	if !c.expectedExisting {
 		return !exists, nil
 	}
 
@@ -55,4 +55,8 @@ func (c *RegexChecker) CheckRender(p *rod.Page) (bool, error) {
 
 func (c *RegexChecker) Type() string {
 	return "RegexChecker"
+}
+
+func (c *RegexChecker) Equal(y *RegexChecker) bool {
+	return c.name == y.name && c.regex == y.regex && c.expectedExisting == y.expectedExisting
 }

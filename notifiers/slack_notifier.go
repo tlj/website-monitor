@@ -11,12 +11,12 @@ import (
 )
 
 type SlackNotifier struct {
-	WebhookUrl string
+	webhookUrl string
 }
 
 func NewSlackNotifier(webhookUrl string) *SlackNotifier {
 	return &SlackNotifier{
-		WebhookUrl: webhookUrl,
+		webhookUrl: webhookUrl,
 	}
 }
 
@@ -63,7 +63,7 @@ func (s *SlackNotifier) Notify(name, displayUrl string, result *result.Results) 
 	}
 
 	slackBody, _ := json.Marshal(body)
-	req, err := http.NewRequest(http.MethodPost, s.WebhookUrl, bytes.NewBuffer(slackBody))
+	req, err := http.NewRequest(http.MethodPost, s.webhookUrl, bytes.NewBuffer(slackBody))
 	if err != nil {
 		return err
 	}
@@ -90,3 +90,6 @@ func (s *SlackNotifier) Notify(name, displayUrl string, result *result.Results) 
 	return nil
 }
 
+func (s *SlackNotifier) Equal(y *SlackNotifier) bool {
+	return s.webhookUrl == y.webhookUrl
+}

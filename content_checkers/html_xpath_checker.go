@@ -66,3 +66,7 @@ func (j *HtmlXPathChecker) CheckRender(p *rod.Page) (bool, error) {
 func (j *HtmlXPathChecker) Type() string {
 	return "HtmlXPathChecker"
 }
+
+func (j *HtmlXPathChecker) Equal(y *HtmlXPathChecker) bool {
+	return j.name == y.name && j.path == y.path && j.expected == y.expected && j.expectedEqual == y.expectedEqual
+}

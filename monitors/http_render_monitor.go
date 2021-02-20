@@ -57,3 +57,7 @@ func (jm *HttpRenderMonitor) Check(check Check) (*result.Results, error) {
 func (jm *HttpRenderMonitor) Type() string {
 	return "HttpRenderMonitor"
 }
+
+func (jm *HttpRenderMonitor) Equal(y *HttpRenderMonitor) bool {
+	return jm.renderServer == y.renderServer
+}
