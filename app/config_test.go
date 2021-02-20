@@ -48,6 +48,21 @@ monitors:
     regex_expected: "Expected test"
     interval: 60
     interval_variable_percentage: 0
+  - name: "A Json Path example"
+    url: "https://monitor.example/data.json"
+    display_url: "https://monitor.example/data"
+    content_checks:
+    - name: Expected test
+      type: "JsonPath"
+      path: "//SomeProperty"
+      expected: "whatever"
+  - name: "A HTML XPath example"
+    url: "https://monitor.example/data.html"
+    content_checks:
+    - name: Expected test
+      type: "HtmlXPath"
+      path: "//h1"
+      expected: "whatever"
   - name: "A http render example"
     url: "https://monitor.example/httprender"
     type: http_render
@@ -131,6 +146,34 @@ monitors:
 				},
 			},
 			{
+				Name:               "A Json Path example",
+				Url:                "https://monitor.example/data.json",
+				DisplayUrl:         "https://monitor.example/data",
+				RenderServerURN:    "ws://localhost:9222",
+				Type:               monitors.HttpMonitorType,
+				Headers:            map[string]string{"Referer": "https://monitor.example/data", "User-Agent": "Mozilla/5.0"},
+				ExpectedStatusCode: 200,
+				Notifiers:          []notifiers.Notifier{notifiers.NewSlackNotifier("https://hooks.slack.com/services/1/2/3")},
+				Scheduler:          defaultSchedule,
+				ContentChecks: []content_checkers.ContentChecker{
+					content_checkers.NewJsonPathChecker("Expected test", "//SomeProperty", "whatever", true),
+				},
+			},
+			{
+				Name:               "A HTML XPath example",
+				Url:                "https://monitor.example/data.html",
+				DisplayUrl:         "https://monitor.example/data.html",
+				RenderServerURN:    "ws://localhost:9222",
+				Type:               monitors.HttpMonitorType,
+				Headers:            map[string]string{"Referer": "https://monitor.example/data.html", "User-Agent": "Mozilla/5.0"},
+				ExpectedStatusCode: 200,
+				Notifiers:          []notifiers.Notifier{notifiers.NewSlackNotifier("https://hooks.slack.com/services/1/2/3")},
+				Scheduler:          defaultSchedule,
+				ContentChecks: []content_checkers.ContentChecker{
+					content_checkers.NewHtmlXPathChecker("Expected test", "//h1", "whatever", true),
+				},
+			},
+			{
 				Name:               "A http render example",
 				Url:                "https://monitor.example/httprender",
 				DisplayUrl:         "https://monitor.example/httprender",
@@ -157,9 +200,6 @@ monitors:
 		cfg,
 		expectedCfg,
 		cmpopts.IgnoreUnexported(scheduler.Scheduler{}, monitors.Check{}, content_checkers.HtmlRenderSelectorChecker{}),
-		//cmpopts.IgnoreUnexported(content_checkers.HtmlRenderSelectorChecker{}, monitors.Check{}),
-		//cmpopts.IgnoreFields(monitors.Check{}, "ContentChecksConfig", "NotifiersConfig"),
-		//cmpopts.IgnoreFields(app.ConfigGlobal{}, "NotifiersConfig"),
 	)
 	if diff != "" {
 		t.Error(diff)
