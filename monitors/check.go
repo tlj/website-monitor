@@ -82,6 +82,10 @@ func (c *Check) updateTimestamps() {
 	c.CheckPending = false
 }
 
+func (c *Check) NextCheckAt() time.Time {
+	return c.nextCheckAt
+}
+
 func (c *Check) ShouldUpdate() bool {
 	if !c.CheckPending && c.nextCheckAt.Sub(time.Now()) <= 0 {
 		return true

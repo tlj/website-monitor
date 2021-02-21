@@ -26,8 +26,11 @@ docker-compose.yaml:
       - ~/config/website-monitor:/app/config
     restart: always
     links:
-      - website-renderer
+      - website-renderer # optional if you want to use http_render monitor
+    ports:
+      - 2112:2112 # optional for prometheus metrics at /metrics
   
+  # optional if you want to use http_render monitor
   website-renderer:
     container_name: website-renderer
     image: rodorg/rod:v0.91.1
@@ -39,15 +42,15 @@ docker-compose.yaml:
 Example:
 ```yaml
 global:
-  expected_status_code: 200
-  interval: 60
-  interval_variable_percentage: 20
-  schedule:
-    days: "1-5"
-    hours: "9-16"
-  headers:
+  expected_status_code: 200 # http status code
+  interval: 60 # interval in seconds
+  interval_variable_percentage: 20 # +/- 20% of the specified interval, making the range 48-72s
+  schedule: # optional
+    days: "1-5" # every weekday (Mon-Fri)
+    hours: "9-16" # between 9:00 and 16:59
+  headers: # always send these headers in http requests
     User-Agent: "Mozilla/5.0"
-  notifiers:
+  notifiers: # always send notifications on state change to these notifiers
     - name: Slack
       type: slack
       webhook: "https://hooks.slack.com/services/..."
@@ -73,7 +76,7 @@ monitors:
         not_expected: "Some Text"
   - name: "Simpler config for website monitor"
     url: "https://www.monitored.website.example/simple"
-    regex_expected: "Some monitored text"
+    regex_expected: "Some monitored text" # short-hand form for the full content_check of "Regex" type
   - name: "Don't use default schedule"
     url: "https://www.monitored.website.example/simple"
     regex_expected: "Some monitored text"

@@ -19,5 +19,7 @@ COPY --from=builder /build/website-monitor /app/
 
 WORKDIR /app
 
+EXPOSE 2112
+
 ENTRYPOINT ["./website-monitor"]
 CMD [""]
