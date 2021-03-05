@@ -67,13 +67,24 @@ monitors:
         type: JsonPath
         path: "//SomeProperty"
         not_expected: "Whatever"
-  - name: "Monitored website feed"
+  - name: "Monitored website"
     url: "https://www.monitored.website.example/"
     type: http
     content_checks:
       - name: SomeText
         type: Regex
         not_expected: "Some Text"
+  - name: "Monitored website, two checks - one needed"
+    url: "https://www.monitored.website.example/"
+    type: http
+    require_some: true
+    content_checks:
+      - name: SomeText
+        type: Regex
+        not_expected: "Some Text"        
+      - name: SomeOtherText
+        type: Regex
+        not_expected: "Some Other Text"
   - name: "Simpler config for website monitor"
     url: "https://www.monitored.website.example/simple"
     regex_expected: "Some monitored text" # short-hand form for the full content_check of "Regex" type

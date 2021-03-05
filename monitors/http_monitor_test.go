@@ -11,11 +11,12 @@ import (
 
 func TestHttpMonitor_Check(t *testing.T) {
 	tests := []struct {
-		name     string
-		data     string
-		checkers []content_checkers.ContentChecker
-		result   bool
-		err      error
+		name        string
+		data        string
+		checkers    []content_checkers.ContentChecker
+		requireSome bool
+		result      bool
+		err         error
 	}{
 		{
 			name: "one checker, success",
@@ -42,6 +43,17 @@ func TestHttpMonitor_Check(t *testing.T) {
 				content_checkers.NewRegexChecker("regex", "sort of text", true),
 				content_checkers.NewRegexChecker("regex", "sort of text", false),
 			},
+			result: false,
+			err:    nil,
+		},
+		{
+			name: "two checkers - success and fail equals success if requireSome",
+			data: "Some sort of text test.",
+			checkers: []content_checkers.ContentChecker{
+				content_checkers.NewRegexChecker("regex", "sort of text", true),
+				content_checkers.NewRegexChecker("regex", "sort of text", false),
+			},
+			requireSome: true,
 			result: false,
 			err:    nil,
 		},

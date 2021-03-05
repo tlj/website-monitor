@@ -71,6 +71,16 @@ monitors:
       type: HtmlRenderSelector
       path: "html h1"
       not_expected: "Expected header"
+  - name: "Two regex tests, only one is required to report success"
+    url: "https://monitor.example/expected"
+    require_some: true
+    content_checks:
+    - name: Either this test
+      type: "Regex"
+      expected: "Expected test"
+    - name: Or this test
+      type: "Regex"
+      expected: "Alternative test"
 `)
 
 	expectedIntervalVariable := 20
@@ -185,6 +195,21 @@ monitors:
 				Scheduler:          defaultSchedule,
 				ContentChecks: []content_checkers.ContentChecker{
 					content_checkers.NewHtmlRenderSelectorChecker("Css Selector Check", "html h1", "Expected header", false),
+				},
+			},
+			{
+				Name:               "Two regex tests, only one is required to report success",
+				Url:                "https://monitor.example/expected",
+				DisplayUrl:         "https://monitor.example/expected",
+				RenderServerURN:    "ws://localhost:9222",
+				Headers:            map[string]string{"Referer": "https://monitor.example/expected", "User-Agent": "Mozilla/5.0"},
+				Type:               monitors.HttpMonitorType,
+				ExpectedStatusCode: 200,
+				Notifiers:          []notifiers.Notifier{notifiers.NewSlackNotifier("https://hooks.slack.com/services/1/2/3")},
+				Scheduler:          defaultSchedule,
+				ContentChecks: []content_checkers.ContentChecker{
+					content_checkers.NewRegexChecker("Either this test", "Expected test", true),
+					content_checkers.NewRegexChecker("Or this test", "Alternative test", true),
 				},
 			},
 		},

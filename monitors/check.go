@@ -32,47 +32,8 @@ type Check struct {
 	lastCheckedAt      time.Time
 	nextCheckAt        time.Time
 	CheckPending       bool
+	RequireSome        bool
 }
-
-/*
-func (c *Check) ParseConfig() error {
-
-
-	for _, cc := range c.ContentChecksConfig {
-		var expected string
-		var expectedToExist bool
-		if v, ok := cc["expected"]; ok {
-			expected = v
-			expectedToExist = true
-		}
-		if v, ok := cc["not_expected"]; ok {
-			expected = v
-			expectedToExist = false
-		}
-
-		var contentCheck content_checkers.ContentChecker
-		switch cc["type"] {
-		case "JsonPath":
-			contentCheck = content_checkers.NewJsonPathChecker(cc["name"], cc["path"], expected, expectedToExist)
-		case "Regex":
-			contentCheck = content_checkers.NewRegexChecker(cc["name"], expected, expectedToExist)
-		case "HtmlXPath":
-			contentCheck = content_checkers.NewHtmlXPathChecker(cc["name"], cc["path"], expected, expectedToExist)
-		case "HtmlRenderSelector":
-			contentCheck = content_checkers.NewHtmlRenderSelectorChecker(cc["name"], cc["path"], expected, expectedToExist)
-		default:
-			return fmt.Errorf("unsupported contentCheck config: %s", cc["type"])
-		}
-
-		c.ContentChecks = append(c.ContentChecks, contentCheck)
-	}
-
-
-	return nil
-}
-
- */
-
 
 func (c *Check) updateTimestamps() {
 	c.lastCheckedAt = time.Now().UTC()
@@ -126,10 +87,18 @@ func (c *Check) Run() error {
 		log.Debugf("%s: %t (err: %v)", result.ContentChecker, result.Result, result.Err)
 	}
 
-	if result.AllTrue() != c.LastSeenState {
-		log.Debugf("%s %s: %t", c.Name, c.Url, result.AllTrue())
+	var endResult bool
+	switch c.RequireSome {
+	case true:
+		endResult = result.SomeTrue()
+	case false:
+		endResult = result.AllTrue()
+	}
+
+	if endResult != c.LastSeenState {
+		log.Debugf("%s %s: %t", c.Name, c.Url, endResult)
 		log.Infof("State change for %s: %t", c.Name, result)
-		c.LastSeenState = result.AllTrue()
+		c.LastSeenState = endResult
 		for _, n := range c.Notifiers {
 			log.Debugf("Sending notification...")
 			err := n.Notify(c.Name, c.DisplayUrl, result)
