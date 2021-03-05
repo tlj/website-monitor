@@ -1,5 +1,9 @@
 # Website Monitor
 
+![example workflow](https://github.com/tlj/website-monitor/actions/workflows/test.yaml/badge.svg)
+![example workflow](https://github.com/tlj/website-monitor/actions/workflows/main.yaml/badge.svg)
+[![codecov](https://codecov.io/gh/tlj/website-monitor/branch/master/graph/badge.svg)](https://codecov.io/gh/tlj/website-monitor)
+
 Website monitor is a simple tool which will look for changes in
 any HTTP hosted file (server side rendered html, json, etc).
 

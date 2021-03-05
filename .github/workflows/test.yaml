@@ -1,6 +1,6 @@
 on: [push, pull_request]
 
-name: run tests
+name: tests
 jobs:
   test:
     strategy:
@@ -17,4 +17,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Run tests
-        run: go test -v
+        run: go test -v -coverprofile=coverage.txt -covermode=atomic ./...
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v1.0.2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.txt
+          flags: unittests
+          name: codecov-umbrella
