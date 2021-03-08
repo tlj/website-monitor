@@ -13,6 +13,18 @@ import (
 	"website-monitor/scheduler"
 )
 
+func SlackNotifierWithoutError(options map[string]string) *notifiers.SlackNotifier {
+	s, _ := notifiers.NewSlackNotifier(options)
+
+	return s
+}
+
+func PushSaferNotifierWithoutError(options map[string]string) *notifiers.PushSaferNotifier {
+	s, _ := notifiers.NewPushSaferNotifier(options)
+
+	return s
+}
+
 func TestHttpMonitor_CheckNotification(t *testing.T) {
 	notificationCount := 0
 	slackServer := httptest.NewServer(
@@ -40,7 +52,7 @@ func TestHttpMonitor_CheckNotification(t *testing.T) {
 				},
 				Notifiers: []notifiers.NotifierHolder{
 					{
-						notifiers.NewSlackNotifier(slackServer.URL),
+						SlackNotifierWithoutError(map[string]string{"webhook": slackServer.URL}),
 					},
 				},
 				Scheduler: scheduler.NewScheduler(time.Duration(30) * time.Second, &intZero, nil, nil),
@@ -60,7 +72,7 @@ func TestHttpMonitor_CheckNotification(t *testing.T) {
 				},
 				Notifiers: []notifiers.NotifierHolder{
 					{
-						notifiers.NewSlackNotifier(slackServer.URL),
+						SlackNotifierWithoutError(map[string]string{"webhook": slackServer.URL}),
 					},
 				},
 				Scheduler: scheduler.NewScheduler(time.Duration(30) * time.Second, &intZero, nil, nil),

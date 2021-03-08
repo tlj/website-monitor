@@ -17,6 +17,18 @@ func SchedulerWithoutError(str string) *scheduler.Scheduler {
 	return ret
 }
 
+func SlackNotifierWithoutError(options map[string]string) *notifiers.SlackNotifier {
+	s, _ := notifiers.NewSlackNotifier(options)
+
+	return s
+}
+
+func PushSaferNotifierWithoutError(options map[string]string) *notifiers.PushSaferNotifier {
+	s, _ := notifiers.NewPushSaferNotifier(options)
+
+	return s
+}
+
 func TestParseConfig(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -59,7 +71,7 @@ monitors:
 						Headers: map[string]string{"Referer":""},
 						Notifiers: []notifiers.NotifierHolder{
 							{
-								notifiers.NewSlackNotifier("http://example.com/slack"),
+								SlackNotifierWithoutError(map[string]string{"webhook": "http://example.com/slack"}),
 							},
 						},
 					},
@@ -154,10 +166,10 @@ monitors:
 					},
 					Notifiers: []notifiers.NotifierHolder{
 						{
-							notifiers.NewSlackNotifier("https://hooks.slack.com/services/X/Y/Z"),
+							SlackNotifierWithoutError(map[string]string{"webhook": "https://hooks.slack.com/services/X/Y/Z"}),
 						},
 						{
-							notifiers.NewPushSaferNotifier("PRIVATEKEY"),
+							PushSaferNotifierWithoutError(map[string]string{"private_key": "PRIVATEKEY"}),
 						},
 					},
 				},
@@ -180,10 +192,10 @@ monitors:
 						},
 						Notifiers: []notifiers.NotifierHolder{
 							{
-								notifiers.NewSlackNotifier("https://hooks.slack.com/services/X/Y/Z"),
+								SlackNotifierWithoutError(map[string]string{"webhook": "https://hooks.slack.com/services/X/Y/Z"}),
 							},
 							{
-								notifiers.NewPushSaferNotifier("PRIVATEKEY"),
+								PushSaferNotifierWithoutError(map[string]string{"private_key": "PRIVATEKEY"}),
 							},
 						},
 					},

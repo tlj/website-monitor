@@ -1,7 +1,6 @@
 package notifiers
 
 import (
-	"fmt"
 	"website-monitor/result"
 )
 
@@ -27,17 +26,17 @@ func (n *NotifierHolder) UnmarshalYAML(unmarshal func(interface{}) error) error 
 
 	switch tmp.Type {
 	case "slack":
-		if webhook, ok := tmp.Options["webhook"]; ok {
-			n.Notifier = NewSlackNotifier(webhook)
-		} else {
-			return fmt.Errorf("slack option 'webhook' is required")
+		sl, err := NewSlackNotifier(tmp.Options)
+		if err != nil {
+			return err
 		}
+		n.Notifier = sl
 	case "pushsafer":
-		if privateKey, ok := tmp.Options["private_key"]; ok {
-			n.Notifier = NewPushSaferNotifier(privateKey)
-		} else {
-			return fmt.Errorf("pushsafer option 'private_key' is required")
+		ps, err := NewPushSaferNotifier(tmp.Options)
+		if err != nil {
+			return err
 		}
+		n.Notifier = ps
 	}
 
 	return nil

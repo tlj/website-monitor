@@ -14,10 +14,16 @@ type SlackNotifier struct {
 	webhookUrl string
 }
 
-func NewSlackNotifier(webhookUrl string) *SlackNotifier {
-	return &SlackNotifier{
-		webhookUrl: webhookUrl,
+var SlackMissingWebhookErr = errors.New("required option 'webhook' is missing")
+
+func NewSlackNotifier(options map[string]string) (*SlackNotifier, error) {
+	if _, ok := options["webhook"]; !ok {
+		return nil, SlackMissingWebhookErr
 	}
+
+	return &SlackNotifier{
+		webhookUrl: options["webhook"],
+	}, nil
 }
 
 type SlackTextSection struct {

@@ -1,25 +1,41 @@
 package notifiers
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strings"
 	"website-monitor/result"
 )
 
 type PushSaferNotifier struct {
 	privateKey string
+	options    map[string]string
 }
 
-func NewPushSaferNotifier(privateKey string) *PushSaferNotifier {
-	return &PushSaferNotifier{
-		privateKey: privateKey,
+var PushSaferMissingPrivateKeyErr = errors.New("required option 'private_key' is missing")
+
+func NewPushSaferNotifier(options map[string]string) (*PushSaferNotifier, error) {
+	if _, ok := options["private_key"]; !ok {
+		return nil, PushSaferMissingPrivateKeyErr
 	}
+
+	delete(options, "private_key")
+
+	return &PushSaferNotifier{
+		privateKey: options["private_key"],
+		options:    options,
+	}, nil
 }
 
 func (p PushSaferNotifier) Notify(name, displayUrl string, result *result.Results) error {
 	params := url.Values{}
+
+	for k, v := range p.options {
+		params.Set(k, v)
+	}
 
 	params.Set("k", p.privateKey)
 	params.Set("t", name)
@@ -46,5 +62,9 @@ func (p PushSaferNotifier) Notify(name, displayUrl string, result *result.Result
 }
 
 func (p *PushSaferNotifier) Equal(y *PushSaferNotifier) bool {
-	return p.privateKey == y.privateKey
+	if p.privateKey != y.privateKey {
+		return false
+	}
+
+	return reflect.DeepEqual(p.options, y.options)
 }
