@@ -118,7 +118,7 @@ func (c *Monitor) Run() error {
 		log.Infof("State change for %s: %t", c.Name, result)
 		c.LastSeenState = endResult
 		for _, n := range c.Notifiers {
-			log.Debugf("Sending notification...")
+			log.Debugf("Sending notification to '%s'...", n.Notifier.Name())
 			err := n.Notifier.Notify(c.Name, c.DisplayUrl, result)
 			if err != nil {
 				log.Warn(err)

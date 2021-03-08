@@ -17,14 +17,14 @@ func SchedulerWithoutError(str string) *scheduler.Scheduler {
 	return ret
 }
 
-func SlackNotifierWithoutError(options map[string]string) *notifiers.SlackNotifier {
-	s, _ := notifiers.NewSlackNotifier(options)
+func SlackNotifierWithoutError(name string, options map[string]string) *notifiers.SlackNotifier {
+	s, _ := notifiers.NewSlackNotifier(name, options)
 
 	return s
 }
 
-func PushSaferNotifierWithoutError(options map[string]string) *notifiers.PushSaferNotifier {
-	s, _ := notifiers.NewPushSaferNotifier(options)
+func PushSaferNotifierWithoutError(name string, options map[string]string) *notifiers.PushSaferNotifier {
+	s, _ := notifiers.NewPushSaferNotifier(name, options)
 
 	return s
 }
@@ -71,7 +71,7 @@ monitors:
 						Headers: map[string]string{"Referer":""},
 						Notifiers: []notifiers.NotifierHolder{
 							{
-								SlackNotifierWithoutError(map[string]string{"webhook": "http://example.com/slack"}),
+								SlackNotifierWithoutError("Slack", map[string]string{"webhook": "http://example.com/slack"}),
 							},
 						},
 					},
@@ -166,10 +166,10 @@ monitors:
 					},
 					Notifiers: []notifiers.NotifierHolder{
 						{
-							SlackNotifierWithoutError(map[string]string{"webhook": "https://hooks.slack.com/services/X/Y/Z"}),
+							SlackNotifierWithoutError("Slack", map[string]string{"webhook": "https://hooks.slack.com/services/X/Y/Z"}),
 						},
 						{
-							PushSaferNotifierWithoutError(map[string]string{"private_key": "PRIVATEKEY"}),
+							PushSaferNotifierWithoutError("PushSafer", map[string]string{"private_key": "PRIVATEKEY"}),
 						},
 					},
 				},
@@ -192,10 +192,10 @@ monitors:
 						},
 						Notifiers: []notifiers.NotifierHolder{
 							{
-								SlackNotifierWithoutError(map[string]string{"webhook": "https://hooks.slack.com/services/X/Y/Z"}),
+								SlackNotifierWithoutError("Slack", map[string]string{"webhook": "https://hooks.slack.com/services/X/Y/Z"}),
 							},
 							{
-								PushSaferNotifierWithoutError(map[string]string{"private_key": "PRIVATEKEY"}),
+								PushSaferNotifierWithoutError("PushSafer", map[string]string{"private_key": "PRIVATEKEY"}),
 							},
 						},
 					},

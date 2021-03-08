@@ -11,19 +11,25 @@ import (
 )
 
 type SlackNotifier struct {
+	name       string
 	webhookUrl string
 }
 
 var SlackMissingWebhookErr = errors.New("required option 'webhook' is missing")
 
-func NewSlackNotifier(options map[string]string) (*SlackNotifier, error) {
+func NewSlackNotifier(name string, options map[string]string) (*SlackNotifier, error) {
 	if _, ok := options["webhook"]; !ok {
 		return nil, SlackMissingWebhookErr
 	}
 
-	return &SlackNotifier{
+	sn := &SlackNotifier{
+		name:       name,
 		webhookUrl: options["webhook"],
-	}, nil
+	}
+
+	delete(options, "webhook")
+
+	return sn, nil
 }
 
 type SlackTextSection struct {
@@ -32,12 +38,12 @@ type SlackTextSection struct {
 }
 
 type SlackBlock struct {
-	Type string `json:"type"`
+	Type string           `json:"type"`
 	Text SlackTextSection `json:"text"`
 }
 
 type SlackRequestBody struct {
-	Text string `json:"text"`
+	Text   string       `json:"text"`
 	Blocks []SlackBlock `json:"blocks"`
 }
 
@@ -96,6 +102,14 @@ func (s *SlackNotifier) Notify(name, displayUrl string, result *result.Results) 
 	return nil
 }
 
+func (s *SlackNotifier) Name() string {
+	return s.name
+}
+
 func (s *SlackNotifier) Equal(y *SlackNotifier) bool {
+	if s.name != y.name {
+		return false
+	}
+
 	return s.webhookUrl == y.webhookUrl
 }

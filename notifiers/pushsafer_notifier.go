@@ -1,8 +1,11 @@
 package notifiers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	log "github.com/sirupsen/logrus"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"reflect"
@@ -11,23 +14,34 @@ import (
 )
 
 type PushSaferNotifier struct {
+	name       string
 	privateKey string
 	options    map[string]string
 }
 
 var PushSaferMissingPrivateKeyErr = errors.New("required option 'private_key' is missing")
 
-func NewPushSaferNotifier(options map[string]string) (*PushSaferNotifier, error) {
+func NewPushSaferNotifier(name string, options map[string]string) (*PushSaferNotifier, error) {
 	if _, ok := options["private_key"]; !ok {
 		return nil, PushSaferMissingPrivateKeyErr
 	}
 
-	delete(options, "private_key")
-
-	return &PushSaferNotifier{
+	ps := &PushSaferNotifier{
+		name:       name,
 		privateKey: options["private_key"],
 		options:    options,
-	}, nil
+	}
+
+	delete(options, "private_key")
+
+	return ps, nil
+}
+
+type PushSaferResponse struct {
+	Status    int    `json:"status"`
+	Error     string `json:"error"`
+	Success   string `json:"success"`
+	Available int    `json:"available"`
 }
 
 func (p PushSaferNotifier) Notify(name, displayUrl string, result *result.Results) error {
@@ -54,14 +68,31 @@ func (p PushSaferNotifier) Notify(name, displayUrl string, result *result.Result
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode != http.StatusOK {
-		return fmt.Errorf("invalid status code from pushsafer: %d", res.StatusCode)
+	body, _ := ioutil.ReadAll(res.Body)
+	jr := PushSaferResponse{}
+	err = json.Unmarshal(body, &jr)
+	if err != nil {
+		return fmt.Errorf("error decoding response from pushsafer: %s", string(body))
 	}
+
+	if jr.Status == 0 {
+		return fmt.Errorf("error returned from pushsafer: %s", jr.Error)
+	}
+
+	log.Debugf("PushSafer '%s' available calls: %d", p.name, jr.Available)
 
 	return nil
 }
 
+func (p *PushSaferNotifier) Name() string {
+	return p.name
+}
+
 func (p *PushSaferNotifier) Equal(y *PushSaferNotifier) bool {
+	if p.name != y.name {
+		return false
+	}
+
 	if p.privateKey != y.privateKey {
 		return false
 	}
