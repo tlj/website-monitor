@@ -20,7 +20,7 @@ func NewHttpRenderMonitor(renderServer string) *HttpRenderMonitor {
 	}
 }
 
-func (jm *HttpRenderMonitor) Check(check Check) (*result.Results, error) {
+func (jm *HttpRenderMonitor) Check(check Monitor) (*result.Results, error) {
 	l, err := launcher.NewRemote(jm.renderServer)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to rod at %s: %s", jm.renderServer, err)
@@ -43,9 +43,9 @@ func (jm *HttpRenderMonitor) Check(check Check) (*result.Results, error) {
 
 	results := &result.Results{}
 	for _, contentCheck := range check.ContentChecks {
-		res, err := contentCheck.CheckRender(p)
+		res, err := contentCheck.ContentChecker.CheckRender(p)
 		results.Results = append(results.Results, result.Result{
-			ContentChecker: contentCheck,
+			ContentChecker: contentCheck.ContentChecker,
 			Result:         res,
 			Err:            err,
 		})

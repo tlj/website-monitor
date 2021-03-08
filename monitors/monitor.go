@@ -17,25 +17,37 @@ const (
 	HttpRenderMonitorType MonitorType = "http_render"
 )
 
-type Check struct {
-	Name               string
-	Url                string
-	DisplayUrl         string
-	RenderServerURN    string
-	Type               MonitorType
-	Headers            map[string]string
-	ExpectedStatusCode int
-	ContentChecks      []content_checkers.ContentChecker
-	Notifiers          []notifiers.Notifier
-	Scheduler          *scheduler.Scheduler
-	LastSeenState      bool
-	lastCheckedAt      time.Time
-	nextCheckAt        time.Time
-	CheckPending       bool
-	RequireSome        bool
+type Monitor struct {
+	tableName struct{} `pg:"checks,alias:check"`
+
+	// MonitorInterface
+	ID                 int               `yaml:"-"`
+	Name               string            `yaml:"name"`
+	Url                string            `yaml:"url"`
+	DisplayUrl         string            `yaml:"display_url"`
+	Type               MonitorType       `yaml:"type"`
+	Headers            map[string]string `yaml:"headers" pg:"-"`
+	ExpectedStatusCode int               `yaml:"expected_status_code"`
+
+	// Schedule
+	Scheduler *scheduler.Scheduler `yaml:"schedule" pg:"-"`
+
+	// Status
+	lastCheckedAt time.Time `pg:"-" yaml:"-"`
+	nextCheckAt   time.Time `pg:"-" yaml:"-"`
+	CheckPending  bool      `pg:"-" yaml:"-"`
+	LastSeenState bool      `pg:"-" yaml:"-"`
+
+	// Config
+	RenderServerURN string                                  `yaml:"render_server_urn" pg:"-"`
+	ContentChecks   []content_checkers.ContentCheckerHolder `yaml:"checks" pg:"-"`
+	RequireSome     bool                                    `yaml:"require_some" pg:"-"`
+
+	// Notifiers
+	Notifiers []notifiers.NotifierHolder `yaml:"notifiers" pg:"-"`
 }
 
-func (c *Check) updateTimestamps() {
+func (c *Monitor) updateTimestamps() {
 	c.lastCheckedAt = time.Now().UTC()
 	c.nextCheckAt = c.Scheduler.CalculateNextFrom(c.lastCheckedAt)
 	log.Debugf("%s next run: %s (in %ds)", c.Name, c.nextCheckAt.String(), int(c.nextCheckAt.Sub(time.Now()).Seconds()))
@@ -43,11 +55,17 @@ func (c *Check) updateTimestamps() {
 	c.CheckPending = false
 }
 
-func (c *Check) NextCheckAt() time.Time {
+func (c *Monitor) NextCheckAt() time.Time {
 	return c.nextCheckAt
 }
 
-func (c *Check) ShouldUpdate() bool {
+func (c *Monitor) ShouldUpdate() bool {
+	// This is probably most correct, but leads to no immediate checks. Should
+	// we do immediate checks?
+	//if c.nextCheckAt.IsZero() {
+	//	c.updateTimestamps()
+	//}
+
 	if !c.CheckPending && c.nextCheckAt.Sub(time.Now()) <= 0 {
 		return true
 	}
@@ -55,10 +73,10 @@ func (c *Check) ShouldUpdate() bool {
 	return false
 }
 
-func (c *Check) Run() error {
+func (c *Monitor) Run() error {
 	defer c.updateTimestamps()
 
-	var jm Monitor
+	var jm MonitorInterface
 	switch c.Type {
 	case HttpMonitorType:
 		jm = &HttpMonitor{}
@@ -80,7 +98,7 @@ func (c *Check) Run() error {
 		return err
 	}
 	if result == nil {
-		return fmt.Errorf("empty results from Check")
+		return fmt.Errorf("empty results from Monitor")
 	}
 
 	for _, result := range result.Results {
@@ -101,7 +119,7 @@ func (c *Check) Run() error {
 		c.LastSeenState = endResult
 		for _, n := range c.Notifiers {
 			log.Debugf("Sending notification...")
-			err := n.Notify(c.Name, c.DisplayUrl, result)
+			err := n.Notifier.Notify(c.Name, c.DisplayUrl, result)
 			if err != nil {
 				log.Warn(err)
 			}

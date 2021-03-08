@@ -1,76 +1,69 @@
 package app
 
 import (
-	"fmt"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 	"io/ioutil"
-	"net/url"
-	"strconv"
-	"strings"
-	"time"
-	"website-monitor/content_checkers"
 	"website-monitor/monitors"
-	"website-monitor/notifiers"
-	"website-monitor/scheduler"
 )
 
-type configFile struct {
-	LogLevel string `yaml:"loglevel"`
-	Global   struct {
-		Headers                    map[string]string   `yaml:"headers"`
-		ExpectedStatusCode         int                 `yaml:"expected_status_code"`
-		Interval                   int                 `yaml:"interval"`
-		IntervalVariablePercentage *int                `yaml:"interval_variable_percentage"`
-		NotifiersConfig            []map[string]string `yaml:"notifiers"`
-		RenderServerURN            string              `yaml:"render_server_urn"`
-		Schedule                   *struct {
-			Days  string `yaml:"days"`
-			Hours string `yaml:"hours"`
-		} `yaml:"schedule"`
-	} `yaml:"global"`
-	Monitors []struct {
-		Name                       string               `yaml:"name"`
-		Url                        string               `yaml:"url"`
-		DisplayUrl                 string               `yaml:"display_url"`
-		RenderServerURN            string               `yaml:"render_server_urn"`
-		Type                       monitors.MonitorType `yaml:"type"`
-		Headers                    map[string]string    `yaml:"headers"`
-		RegexNotExpected           string               `yaml:"regex_not_expected"`
-		RegexExpected              string               `yaml:"regex_expected"`
-		ExpectedStatusCode         int                  `yaml:"expected_status_code"`
-		LastSeenState              bool                 `yaml:"last_seen_state"`
-		ContentChecksConfig        []map[string]string  `yaml:"content_checks"`
-		NotifiersConfig            []map[string]string  `yaml:"notifiers"`
-		Interval                   int                  `yaml:"interval"`
-		IntervalVariablePercentage *int                 `yaml:"interval_variable_percentage"`
-		Schedule                   *struct {
-			Days  string `yaml:"days"`
-			Hours string `yaml:"hours"`
-		} `yaml:"schedule"`
-	} `yaml:"monitors"`
-}
-
 type Config struct {
-	LogLevel string            `yaml:"loglevel"`
-	Monitors []*monitors.Check `yaml:"monitors"`
+	LogLevel string              `yaml:"loglevel"`
+	Default  *monitors.Monitor   `yaml:"defaults"`
+	Monitors []*monitors.Monitor `yaml:"monitors"`
 }
 
-func LoadConfig(filename string) (*Config, error) {
-	config := &Config{}
-
+func (c *Config) LoadConfigFromFile(filename string) error {
 	configData, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	err = config.Parse(configData)
-	if err != nil {
-		return nil, err
-	}
-
-	return config, nil
+	return c.LoadConfig(configData)
 }
 
+func (c *Config) LoadConfig(configData []byte) error {
+	err := yaml.Unmarshal(configData, c)
+	if err != nil {
+		return err
+	}
+
+	for _, chk := range c.Monitors {
+		if chk.DisplayUrl == "" {
+			chk.DisplayUrl = chk.Url
+		}
+		if chk.Headers == nil {
+			chk.Headers = make(map[string]string)
+		}
+		if _, ok := chk.Headers["Referer"]; !ok {
+			chk.Headers["Referer"] = chk.DisplayUrl
+		}
+		if c.Default != nil {
+			if c.Default.Notifiers != nil && chk.Notifiers == nil {
+				chk.Notifiers = c.Default.Notifiers
+			}
+			if c.Default.Scheduler != nil && chk.Scheduler == nil {
+				chk.Scheduler = c.Default.Scheduler
+			}
+			if c.Default.Type != "" && chk.Type == "" {
+				chk.Type = c.Default.Type
+			}
+			if c.Default.ExpectedStatusCode != 0 && chk.ExpectedStatusCode == 0 {
+				chk.ExpectedStatusCode = c.Default.ExpectedStatusCode
+			}
+
+			for k, v := range c.Default.Headers {
+				if _, ok := chk.Headers[k]; !ok {
+					chk.Headers[k] = v
+				}
+			}
+
+		}
+	}
+
+	return nil
+}
+
+/*
 func (c *Config) Parse(data []byte) error {
 	cfg := &configFile{}
 	err := yaml.Unmarshal(data, &cfg)
@@ -99,7 +92,7 @@ func (c *Config) Parse(data []byte) error {
 		if mCheck.ExpectedStatusCode == 0 {
 			return fmt.Errorf("monitor %d (%s) has invalid required status code: %d", k, mCheck.Name, mCheck.ExpectedStatusCode)
 		}
-		check := monitors.Check{
+		check := monitors.Monitor{
 			Name:               mCheck.Name,
 			Url:                mCheck.Url,
 			DisplayUrl:         mCheck.DisplayUrl,
@@ -233,6 +226,6 @@ func (c *Config) Parse(data []byte) error {
 		c.Monitors = append(c.Monitors, &check)
 	}
 
-
 	return nil
 }
+*/

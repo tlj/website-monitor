@@ -1,6 +1,8 @@
 package scheduler_test
 
 import (
+	"gopkg.in/yaml.v3"
+	"reflect"
 	"testing"
 	"time"
 	"website-monitor/scheduler"
@@ -134,6 +136,165 @@ func TestScheduler_IsWithinSchedule(t *testing.T) {
 			result := s.IsWithinSchedule(test.value)
 			if result != test.expected {
 				t.Errorf("got: %t, expected: %t", result, test.expected)
+			}
+		})
+	}
+}
+
+func TestScheduler_String(t *testing.T) {
+	zero := 0
+	twenty := 20
+	tests := []struct {
+		name      string
+		scheduler scheduler.Scheduler
+		expected  string
+	}{
+		{
+			name: "interval: 3600s, variation: 0, days: 1-5, hours: 7-17",
+			scheduler: *scheduler.NewScheduler(
+				3600*time.Second,
+				&zero,
+				scheduler.Hours{7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+				scheduler.Days{1, 2, 3, 4, 5}),
+			expected: "3600;0;1,2,3,4,5;7,8,9,10,11,12,13,14,15,16,17",
+		},
+		{
+			name: "interval: 600s, variation: 20, days: 1,3, hours: 8,9,11",
+			scheduler: *scheduler.NewScheduler(
+				600*time.Second,
+				&twenty,
+				scheduler.Hours{8, 9, 11},
+				scheduler.Days{1, 3}),
+			expected: "600;20;1,3;8,9,11",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := test.scheduler.String()
+			if got != test.expected {
+				t.Errorf("got: %s, expected: %s", got, test.expected)
+			}
+		})
+	}
+}
+
+func TestScheduler_FromString(t *testing.T) {
+	zero := 0
+	twenty := 20
+	tests := []struct {
+		name     string
+		input    string
+		expected *scheduler.Scheduler
+	}{
+		{
+			name:  "interval: 3600, variation: 0, days: 1-5, hours: 7-17",
+			input: "3600;0;1,2,3,4,5;7,8,9,10,11,12,13,14,15,16,17",
+			expected: scheduler.NewScheduler(
+				3600*time.Second,
+				&zero,
+				scheduler.Hours{7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17},
+				scheduler.Days{1, 2, 3, 4, 5}),
+		},
+		{
+			name:  "interval: 600, variation: 20, days: 1,3, hours: 8,9,11",
+			input: "600;20;1,3;8,9,11",
+			expected: scheduler.NewScheduler(
+				600*time.Second,
+				&twenty,
+				scheduler.Hours{8, 9, 11},
+				scheduler.Days{1, 3}),
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := scheduler.NewSchedulerFromString(test.input)
+			if err != nil {
+				t.Errorf("unexpected err: %v", err)
+			}
+			if !reflect.DeepEqual(got, test.expected) {
+				t.Errorf("got: %v, expected: %v", got, test.expected)
+			}
+		})
+	}
+}
+
+func TestDays_UnmarshalYAML(t *testing.T) {
+	tests := []struct {
+		name     string
+		data     string
+		expected *scheduler.Days
+	}{
+		{
+			name:     "1-5",
+			data:     "1-5",
+			expected: &scheduler.Days{1, 2, 3, 4, 5},
+		},
+		{
+			name:     "1,2,3",
+			data:     "1,2,3",
+			expected: &scheduler.Days{1, 2, 3},
+		},
+		{
+			name:     "1,2,3,5-6",
+			data:     "1,2,3,5-6",
+			expected: &scheduler.Days{1, 2, 3, 5, 6},
+		},
+		{
+			name:     "1,2-4,6",
+			data:     "1,2-4,6",
+			expected: &scheduler.Days{1, 2, 3, 4, 6},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			d := &scheduler.Days{}
+			err := yaml.Unmarshal([]byte(test.data), d)
+			if err != nil {
+				t.Errorf("got err %v, expected nil", err)
+			}
+			if !reflect.DeepEqual(d, test.expected) {
+				t.Errorf("got '%v' expected '%v'", d, test.expected)
+			}
+		})
+	}
+}
+
+func TestHours_UnmarshalYAML(t *testing.T) {
+	tests := []struct {
+		name     string
+		data     string
+		expected *scheduler.Hours
+	}{
+		{
+			name:     "1-5",
+			data:     "1-5",
+			expected: &scheduler.Hours{1, 2, 3, 4, 5},
+		},
+		{
+			name:     "1,2,3",
+			data:     "1,2,3",
+			expected: &scheduler.Hours{1, 2, 3},
+		},
+		{
+			name:     "1,2,3,5-6",
+			data:     "1,2,3,5-6",
+			expected: &scheduler.Hours{1, 2, 3, 5, 6},
+		},
+		{
+			name:     "1,2-4,6",
+			data:     "1,2-4,6",
+			expected: &scheduler.Hours{1, 2, 3, 4, 6},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			d := &scheduler.Hours{}
+			err := yaml.Unmarshal([]byte(test.data), d)
+			if err != nil {
+				t.Errorf("got err %v, expected nil", err)
+			}
+			if !reflect.DeepEqual(d, test.expected) {
+				t.Errorf("got '%v' expected '%v'", d, test.expected)
 			}
 		})
 	}

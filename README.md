@@ -46,11 +46,13 @@ docker-compose.yaml:
 
 Example:
 ```yaml
-global:
+loglevel: info
+defaults:
+  type: "http"
   expected_status_code: 200 # http status code
-  interval: 60 # interval in seconds
-  interval_variable_percentage: 20 # +/- 20% of the specified interval, making the range 48-72s
   schedule: # optional
+    interval: 60 # interval in seconds
+    interval_variable_percentage: 20 # +/- 20% of the specified interval, making the range 48-72s
     days: "1-5" # every weekday (Mon-Fri)
     hours: "9-16" # between 9:00 and 16:59
   headers: # always send these headers in http requests
@@ -58,53 +60,64 @@ global:
   notifiers: # always send notifications on state change to these notifiers
     - name: Slack
       type: slack
-      webhook: "https://hooks.slack.com/services/..."
+      options:
+        webhook: "https://hooks.slack.com/services/..."
+    - name: PushSafer
+      type: pushsafer
+      options:
+        private_key: "PRIVATE_KEY"
 monitors:
   - name: "Monitored website feed"
     url: "https://www.monitored.website.example/feed.json"
     display_url: "https://www.monitored.website.example/"
-    type: http
     headers:
       Referer: "https://www.monitored.website.example/"
       Accept: "application/json"
-    content_checks:
+    monitors:
       - name: SomeProperty
-        type: JsonPath
+        type: json_path
         path: "//SomeProperty"
-        not_expected: "Whatever"
+        value: "Whatever"
+        is_expected: false
   - name: "Monitored website"
     url: "https://www.monitored.website.example/"
     type: http
-    content_checks:
+    monitors:
       - name: SomeText
-        type: Regex
-        not_expected: "Some Text"
+        type: regex
+        value: "Some Text"
+        is_expected: false
   - name: "Monitored website, two checks - one needed"
     url: "https://www.monitored.website.example/"
-    type: http
     require_some: true
-    content_checks:
+    monitors:
       - name: SomeText
-        type: Regex
-        not_expected: "Some Text"        
+        type: regex
+        value: "Some Text"
+        is_expected: false        
       - name: SomeOtherText
-        type: Regex
-        not_expected: "Some Other Text"
-  - name: "Simpler config for website monitor"
-    url: "https://www.monitored.website.example/simple"
-    regex_expected: "Some monitored text" # short-hand form for the full content_check of "Regex" type
+        type: regex
+        value: "Some Other Text"
+        is_expected: false
   - name: "Don't use default schedule"
     url: "https://www.monitored.website.example/simple"
-    regex_expected: "Some monitored text"
-    interval: 3600
-    interval_variable_percentage: 0
-    schedule: {}
+    monitors:
+      - name: Some monitored text
+        type: regex
+        value: "Some monitored text"
+        is_expected: true
+    schedule:
+      interval: 3600
+      interval_variable_percentage: 0 
+      days: ""
+      hours: ""
   - name: "JS rendered website, with css selector"
     url: "https://www.monitored.website.example/js"
     type: http_render
-    content_checks:
+    monitors:
       - name: Some text rendered only with JS
         type: HtmlRenderSelector
         path: "html body div#header h1#rendered"
-        expected: "A rendered header"
+        value: "A rendered header"
+        is_expected: true
 ```

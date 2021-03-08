@@ -25,19 +25,23 @@ func TestHttpMonitor_CheckNotification(t *testing.T) {
 	intZero := 0
 	tests := []struct {
 		name              string
-		check             monitors.Check
+		check             monitors.Monitor
 		notificationCount int
 	}{
 		{
 			name: "send notification when state changes",
-			check: monitors.Check{
+			check: monitors.Monitor{
 				Name:               "Test notifications",
 				ExpectedStatusCode: 200,
-				ContentChecks: []content_checkers.ContentChecker{
-					content_checkers.NewRegexChecker("regex", "sort of text", true),
+				ContentChecks: []content_checkers.ContentCheckerHolder{
+					{
+						content_checkers.NewRegexChecker("regex", "sort of text", true),
+					},
 				},
-				Notifiers: []notifiers.Notifier{
-					notifiers.NewSlackNotifier(slackServer.URL),
+				Notifiers: []notifiers.NotifierHolder{
+					{
+						notifiers.NewSlackNotifier(slackServer.URL),
+					},
 				},
 				Scheduler: scheduler.NewScheduler(time.Duration(30) * time.Second, &intZero, nil, nil),
 				LastSeenState: false,
@@ -46,14 +50,18 @@ func TestHttpMonitor_CheckNotification(t *testing.T) {
 		},
 		{
 			name: "dont send notification when state is same",
-			check: monitors.Check{
+			check: monitors.Monitor{
 				Name:               "Test notifications",
 				ExpectedStatusCode: 200,
-				ContentChecks: []content_checkers.ContentChecker{
-					content_checkers.NewRegexChecker("regex", "sort of text", true),
+				ContentChecks: []content_checkers.ContentCheckerHolder{
+					{
+						content_checkers.NewRegexChecker("regex", "sort of text", true),
+					},
 				},
-				Notifiers: []notifiers.Notifier{
-					notifiers.NewSlackNotifier(slackServer.URL),
+				Notifiers: []notifiers.NotifierHolder{
+					{
+						notifiers.NewSlackNotifier(slackServer.URL),
+					},
 				},
 				Scheduler: scheduler.NewScheduler(time.Duration(30) * time.Second, &intZero, nil, nil),
 				LastSeenState: true,

@@ -1,14 +1,13 @@
 package main
 
 import (
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"time"
 	"website-monitor/app"
 	"website-monitor/monitors"
 	"website-monitor/prometheus"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
@@ -17,7 +16,8 @@ func main() {
 	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
 	log.SetLevel(log.InfoLevel)
 
-	config, err := app.LoadConfig("config/config.yaml")
+	config := &app.Config{}
+	err := config.LoadConfigFromFile("config/config.yaml")
 	if err != nil {
 		log.Fatalf("Error while loading config/config.yaml: %s", err)
 	}
@@ -43,23 +43,23 @@ func main() {
 
 	log.Infof("Starting %d checks...", len(checks))
 
-	queue := make(chan *monitors.Check, 10)
+	queue := make(chan *monitors.Monitor, 10)
 
 	go func() {
 		t := time.NewTimer(1 * time.Second)
 		for {
 			select {
-				case <- t.C:
-					log.Debug("Looking for job...")
-					for _, c := range checks {
-						if c.ShouldUpdate() {
-							log.Infof("Queuing %s...", c.Name)
-							c.CheckPending = true
-							queue <- c
-							prometheus.JobQueueGauge.Inc()
-						}
+			case <-t.C:
+				log.Debug("Looking for job...")
+				for _, c := range checks {
+					if c.ShouldUpdate() {
+						log.Infof("Queuing %s...", c.Name)
+						c.CheckPending = true
+						queue <- c
+						prometheus.JobQueueGauge.Inc()
 					}
-					t.Reset(1 * time.Second)
+				}
+				t.Reset(1 * time.Second)
 			}
 		}
 	}()
@@ -69,7 +69,7 @@ func main() {
 			select {
 			case c := <-queue:
 				prometheus.JobQueueGauge.Dec()
-				go func(ch *monitors.Check) {
+				go func(ch *monitors.Monitor) {
 					prometheus.MonitorsProcessedTotal.Inc()
 					prometheus.MonitorsIndividualProcessed.WithLabelValues(ch.Name).Inc()
 					if err := ch.Run(); err != nil {
@@ -89,4 +89,5 @@ func main() {
 
 	http.Handle("/metrics", promhttp.Handler())
 	log.Fatal(http.ListenAndServe(":2112", nil))
+
 }

@@ -11,7 +11,7 @@ import (
 
 type HttpMonitor struct{}
 
-func (jm *HttpMonitor) Check(check Check) (*result.Results, error) {
+func (jm *HttpMonitor) Check(check Monitor) (*result.Results, error) {
 	req, err := http.NewRequest(http.MethodGet, check.Url, nil)
 	if err != nil {
 		return nil, err
@@ -39,9 +39,9 @@ func (jm *HttpMonitor) Check(check Check) (*result.Results, error) {
 
 	results := &result.Results{}
 	for _, contentCheck := range check.ContentChecks {
-		res, err := contentCheck.Check(ioutil.NopCloser(bytes.NewBuffer(body)))
+		res, err := contentCheck.ContentChecker.Check(ioutil.NopCloser(bytes.NewBuffer(body)))
 		results.Results = append(results.Results, result.Result{
-			ContentChecker: contentCheck,
+			ContentChecker: contentCheck.ContentChecker,
 			Result: res,
 			Err: err,
 		})
