@@ -57,15 +57,24 @@ defaults:
     hours: "9-16" # between 9:00 and 16:59
   headers: # always send these headers in http requests
     User-Agent: "Mozilla/5.0"
-  notifiers: # always send notifications on state change to these notifiers
+  # always send notifications on state change to these notifiers, you can have as few or as 
+  # many notifiers as you want
+  notifiers: 
+    # Send notifications to Slack. Make sure you have a webhook configured.
     - name: Slack
       type: slack
       options:
         webhook: "https://hooks.slack.com/services/..."
+    # Send notifications through PushSafer.
     - name: PushSafer
       type: pushsafer
       options:
         private_key: "PRIVATE_KEY"
+    # Store state changes to a postgres sql database
+    - name: PostgreSQL Database
+      type: postgres
+      options:
+        url: "postgres://postgres:mysecretpassword@localhost:5432/website-monitor?sslmode=disable"
 monitors:
   - name: "Monitored website feed"
     url: "https://www.monitored.website.example/feed.json"

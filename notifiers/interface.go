@@ -38,6 +38,12 @@ func (n *NotifierHolder) UnmarshalYAML(unmarshal func(interface{}) error) error 
 			return err
 		}
 		n.Notifier = ps
+	case "postgres":
+		pg, err := NewPostgresNotifier(tmp.Name, tmp.Options)
+		if err != nil {
+			return err
+		}
+		n.Notifier = pg
 	}
 
 	return nil

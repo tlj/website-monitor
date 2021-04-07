@@ -299,3 +299,24 @@ func TestHours_UnmarshalYAML(t *testing.T) {
 		})
 	}
 }
+
+func TestHours_String(t *testing.T) {
+	tests := []struct {
+		name string
+		h    scheduler.Hours
+		want string
+	}{
+		{
+			name: "simple list of hours",
+			h: scheduler.Hours{1,2,3,4,5},
+			want: "1,2,3,4,5",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.h.String(); got != tt.want {
+				t.Errorf("String() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
