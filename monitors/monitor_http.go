@@ -39,9 +39,9 @@ func (jm *HttpMonitor) Check(check Monitor) (*result.Results, error) {
 
 	results := &result.Results{}
 	for _, contentCheck := range check.ContentChecks {
-		res, err := contentCheck.ContentChecker.Check(ioutil.NopCloser(bytes.NewBuffer(body)))
+		res, err := contentCheck.Check(ioutil.NopCloser(bytes.NewBuffer(body)))
 		results.Results = append(results.Results, result.Result{
-			ContentChecker: contentCheck.ContentChecker,
+			ContentChecker: contentCheck,
 			Result: res,
 			Err: err,
 		})

@@ -2,20 +2,20 @@ package content_checkers
 
 import (
 	"fmt"
-	"github.com/antchfx/htmlquery"
+	"github.com/antchfx/jsonquery"
 	"github.com/go-rod/rod"
 	"io"
 )
 
-type HtmlXPathChecker struct {
+type JsonPathChecker struct {
 	name          string
 	path          string
 	expected      string
 	expectedEqual bool
 }
 
-func NewHtmlXPathChecker(name, path, expected string, expectedEqual bool) *HtmlXPathChecker {
-	return &HtmlXPathChecker{
+func NewJsonPathChecker(name, path, expected string, expectedEqual bool) *JsonPathChecker {
+	return &JsonPathChecker{
 		name:          name,
 		path:          path,
 		expected:      expected,
@@ -23,7 +23,7 @@ func NewHtmlXPathChecker(name, path, expected string, expectedEqual bool) *HtmlX
 	}
 }
 
-func (j *HtmlXPathChecker) String() string {
+func (j *JsonPathChecker) String() string {
 	if j.expectedEqual {
 		return fmt.Sprintf("%s - '%s' is '%s'", j.name, j.path, j.expected)
 	} else {
@@ -31,13 +31,13 @@ func (j *HtmlXPathChecker) String() string {
 	}
 }
 
-func (j *HtmlXPathChecker) Check(r io.Reader) (bool, error) {
-	doc, err := htmlquery.Parse(r)
+func (j *JsonPathChecker) Check(r io.Reader) (bool, error) {
+	doc, err := jsonquery.Parse(r)
 	if err != nil {
 		return false, err
 	}
 
-	stockMeta := htmlquery.FindOne(doc, j.path)
+	stockMeta := jsonquery.FindOne(doc, j.path)
 	if stockMeta == nil {
 		if j.expectedEqual {
 			return false, nil
@@ -47,11 +47,11 @@ func (j *HtmlXPathChecker) Check(r io.Reader) (bool, error) {
 	}
 
 	if !j.expectedEqual {
-		if stockMeta.Data == j.expected {
+		if stockMeta.InnerText() == j.expected {
 			return false, nil
 		}
 	} else {
-		if stockMeta.Data != j.expected {
+		if stockMeta.InnerText() != j.expected {
 			return false, nil
 		}
 	}
@@ -59,14 +59,18 @@ func (j *HtmlXPathChecker) Check(r io.Reader) (bool, error) {
 	return true, nil
 }
 
-func (j *HtmlXPathChecker) CheckRender(p *rod.Page) (bool, error) {
+func (j *JsonPathChecker) CheckRender(p *rod.Page) (bool, error) {
 	panic("implement me")
 }
 
-func (j *HtmlXPathChecker) Type() string {
-	return "HtmlXPathChecker"
+func (j *JsonPathChecker) Type() string {
+	return "JsonPathChecker"
 }
 
-func (j *HtmlXPathChecker) Equal(y *HtmlXPathChecker) bool {
+func (j *JsonPathChecker) Equal(y *JsonPathChecker) bool {
 	return j.name == y.name && j.path == y.path && j.expected == y.expected && j.expectedEqual == y.expectedEqual
+}
+
+func (j *JsonPathChecker) Name() string {
+	return j.name
 }

@@ -43,9 +43,9 @@ func (jm *HttpRenderMonitor) Check(check Monitor) (*result.Results, error) {
 
 	results := &result.Results{}
 	for _, contentCheck := range check.ContentChecks {
-		res, err := contentCheck.ContentChecker.CheckRender(p)
+		res, err := contentCheck.CheckRender(p)
 		results.Results = append(results.Results, result.Result{
-			ContentChecker: contentCheck.ContentChecker,
+			ContentChecker: contentCheck,
 			Result:         res,
 			Err:            err,
 		})

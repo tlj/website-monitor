@@ -60,3 +60,7 @@ func (c *RegexChecker) Type() string {
 func (c *RegexChecker) Equal(y *RegexChecker) bool {
 	return c.name == y.name && c.regex == y.regex && c.expectedExisting == y.expectedExisting
 }
+
+func (c *RegexChecker) Name() string {
+	return c.name
+}

@@ -2,12 +2,11 @@ package monitors
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"time"
 	"website-monitor/content_checkers"
-	"website-monitor/notifiers"
-	"website-monitor/scheduler"
-
-	log "github.com/sirupsen/logrus"
+	"website-monitor/result"
+	"website-monitor/schedule"
 )
 
 type MonitorType string
@@ -21,7 +20,9 @@ type Monitor struct {
 	tableName struct{} `pg:"checks,alias:check"`
 
 	// MonitorInterface
-	ID                 int               `yaml:"-"`
+	Id     int64 `yaml:"-"`
+	UserId int64 `yaml:"-"`
+
 	Name               string            `yaml:"name"`
 	Url                string            `yaml:"url"`
 	DisplayUrl         string            `yaml:"display_url"`
@@ -30,7 +31,7 @@ type Monitor struct {
 	ExpectedStatusCode int               `yaml:"expected_status_code"`
 
 	// Schedule
-	Scheduler *scheduler.Scheduler `yaml:"schedule" pg:"-"`
+	Scheduler *schedule.Schedule `yaml:"schedule" pg:"-"`
 
 	// Status
 	lastCheckedAt time.Time `pg:"-" yaml:"-"`
@@ -39,12 +40,9 @@ type Monitor struct {
 	LastSeenState bool      `pg:"-" yaml:"-"`
 
 	// Config
-	RenderServerURN string                                  `yaml:"render_server_urn" pg:"-"`
-	ContentChecks   []content_checkers.ContentCheckerHolder `yaml:"checks" pg:"-"`
-	RequireSome     bool                                    `yaml:"require_some" pg:"-"`
-
-	// Notifiers
-	Notifiers []notifiers.NotifierHolder `yaml:"notifiers" pg:"-"`
+	RenderServerURN string                            `yaml:"render_server_urn" pg:"-"`
+	ContentChecks   []content_checkers.ContentChecker `yaml:"checks" pg:"-"`
+	RequireSome     bool                              `yaml:"require_some" pg:"-"`
 }
 
 func (c *Monitor) updateTimestamps() {
@@ -67,13 +65,17 @@ func (c *Monitor) ShouldUpdate() bool {
 	//}
 
 	if !c.CheckPending && c.nextCheckAt.Sub(time.Now()) <= 0 {
+		// when doing a separate schedule we don't know about when the update was done, so
+		// let's just update this now
+		c.updateTimestamps()
+
 		return true
 	}
 
 	return false
 }
 
-func (c *Monitor) Run() error {
+func (c *Monitor) Run() (*result.Results, error) {
 	defer c.updateTimestamps()
 
 	var jm MonitorInterface
@@ -88,43 +90,30 @@ func (c *Monitor) Run() error {
 	case "":
 		jm = &HttpMonitor{}
 	default:
-		return fmt.Errorf("invalid monitortype '%s'", c.Type)
+		return nil, fmt.Errorf("invalid monitortype '%s'", c.Type)
 	}
 	if c.Type == HttpMonitorType {
 		jm = &HttpMonitor{}
 	}
 	result, err := jm.Check(*c)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if result == nil {
-		return fmt.Errorf("empty results from Monitor")
+		return nil, fmt.Errorf("empty results from Monitor")
 	}
 
-	for _, result := range result.Results {
-		log.Debugf("%s: %t (err: %v)", result.ContentChecker, result.Result, result.Err)
+	for _, res := range result.Results {
+		log.Debugf("%s: %t (err: %v)", res.ContentChecker, res.Result, res.Err)
 	}
 
-	var endResult bool
-	switch c.RequireSome {
-	case true:
-		endResult = result.SomeTrue()
-	case false:
-		endResult = result.AllTrue()
-	}
+	return result, nil
+}
 
-	if endResult != c.LastSeenState {
-		log.Debugf("%s %s: %t", c.Name, c.Url, endResult)
-		log.Infof("State change for %s: %t", c.Name, result)
-		c.LastSeenState = endResult
-		for _, n := range c.Notifiers {
-			log.Debugf("Sending notification to '%s'...", n.Notifier.Name())
-			err := n.Notifier.Notify(c.Name, c.DisplayUrl, result)
-			if err != nil {
-				log.Warn(err)
-			}
-		}
-	}
+func (c *Monitor) GetId() int64 {
+	return c.Id
+}
 
-	return nil
+func (c *Monitor) GetName() string {
+	return c.Name
 }

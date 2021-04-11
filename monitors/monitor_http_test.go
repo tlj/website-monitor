@@ -13,7 +13,7 @@ func TestHttpMonitor_Check(t *testing.T) {
 	tests := []struct {
 		name        string
 		data        string
-		checkers    []content_checkers.ContentCheckerHolder
+		checkers    []content_checkers.ContentChecker
 		requireSome bool
 		result      bool
 		err         error
@@ -21,10 +21,8 @@ func TestHttpMonitor_Check(t *testing.T) {
 		{
 			name: "one checker, success",
 			data: "Some sort of text test.",
-			checkers: []content_checkers.ContentCheckerHolder{
-				{
-					content_checkers.NewRegexChecker("regex", "sort of text", true),
-				},
+			checkers: []content_checkers.ContentChecker{
+				content_checkers.NewRegexChecker("regex", "sort of text", true),
 			},
 			result: true,
 			err:    nil,
@@ -32,10 +30,8 @@ func TestHttpMonitor_Check(t *testing.T) {
 		{
 			name: "one checker, fail",
 			data: "Some sort of text test.",
-			checkers: []content_checkers.ContentCheckerHolder{
-				{
-					content_checkers.NewRegexChecker("regex", "no such text", true),
-				},
+			checkers: []content_checkers.ContentChecker{
+				content_checkers.NewRegexChecker("regex", "no such text", true),
 			},
 			result: false,
 			err:    nil,
@@ -43,13 +39,9 @@ func TestHttpMonitor_Check(t *testing.T) {
 		{
 			name: "two checkers - success and fail equals fail",
 			data: "Some sort of text test.",
-			checkers: []content_checkers.ContentCheckerHolder{
-				{
-					content_checkers.NewRegexChecker("regex", "sort of text", true),
-				},
-				{
-					content_checkers.NewRegexChecker("regex", "sort of text", false),
-				},
+			checkers: []content_checkers.ContentChecker{
+				content_checkers.NewRegexChecker("regex", "sort of text", true),
+				content_checkers.NewRegexChecker("regex", "sort of text", false),
 			},
 			result: false,
 			err:    nil,
@@ -57,17 +49,13 @@ func TestHttpMonitor_Check(t *testing.T) {
 		{
 			name: "two checkers - success and fail equals success if requireSome",
 			data: "Some sort of text test.",
-			checkers: []content_checkers.ContentCheckerHolder{
-				{
-					content_checkers.NewRegexChecker("regex", "sort of text", true),
-				},
-				{
-					content_checkers.NewRegexChecker("regex", "sort of text", false),
-				},
+			checkers: []content_checkers.ContentChecker{
+				content_checkers.NewRegexChecker("regex", "sort of text", true),
+				content_checkers.NewRegexChecker("regex", "sort of text", false),
 			},
 			requireSome: true,
-			result: false,
-			err:    nil,
+			result:      false,
+			err:         nil,
 		},
 	}
 	for _, test := range tests {

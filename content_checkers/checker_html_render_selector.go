@@ -72,3 +72,7 @@ func (h *HtmlRenderSelectorChecker) Type() string {
 func (h *HtmlRenderSelectorChecker) Equal(y *HtmlRenderSelectorChecker) bool {
 	return h.name == y.name && h.path == y.path && h.expected == y.expected && h.expectedEqual == y.expectedEqual
 }
+
+func (h *HtmlRenderSelectorChecker) Name() string {
+	return h.name
+}

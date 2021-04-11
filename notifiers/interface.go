@@ -1,12 +1,12 @@
 package notifiers
 
 import (
-	"website-monitor/result"
+	"website-monitor/messagequeue"
 )
 
 type Notifier interface {
 	Name() string
-	Notify(name, displayUrl string, result *result.Results) error
+	Notify(name, displayUrl string, result *messagequeue.CrawlResult) error
 }
 
 type NotifierHolder struct {
@@ -26,12 +26,12 @@ func (n *NotifierHolder) UnmarshalYAML(unmarshal func(interface{}) error) error 
 	}
 
 	switch tmp.Type {
-	case "slack":
-		sl, err := NewSlackNotifier(tmp.Name, tmp.Options)
-		if err != nil {
-			return err
-		}
-		n.Notifier = sl
+	//case "slack":
+		//sl, err := NewSlackNotifier(tmp.Name, tmp.Options)
+		//if err != nil {
+			//return err
+		//}
+		//n.Notifier = sl
 	case "pushsafer":
 		ps, err := NewPushSaferNotifier(tmp.Name, tmp.Options)
 		if err != nil {

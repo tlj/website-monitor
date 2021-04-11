@@ -6,7 +6,7 @@ import (
 	"github.com/go-pg/pg/v10"
 	"github.com/go-pg/pg/v10/orm"
 	"time"
-	"website-monitor/result"
+	"website-monitor/messagequeue"
 )
 
 type PgLog struct {
@@ -51,7 +51,7 @@ func (mn *PostgresNotifier) Name() string {
 	return mn.name
 }
 
-func (mn *PostgresNotifier) Notify(name, displayUrl string, result *result.Results) error {
+func (mn *PostgresNotifier) Notify(name, displayUrl string, result *messagequeue.CrawlResult) error {
 	if mn.dbConn == nil {
 		return fmt.Errorf("no postgres database connected")
 	}
@@ -59,7 +59,7 @@ func (mn *PostgresNotifier) Notify(name, displayUrl string, result *result.Resul
 	pl := PgLog{
 		Name:          name,
 		DisplayUrl:    displayUrl,
-		MatchesChecks: result.AllTrue(),
+		MatchesChecks: result.Result,
 		CreatedAt:     time.Now(),
 	}
 

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-	"website-monitor/result"
+	"website-monitor/messagequeue"
 )
 
 type SlackNotifier struct {
@@ -17,14 +17,14 @@ type SlackNotifier struct {
 
 var SlackMissingWebhookErr = errors.New("required option 'webhook' is missing")
 
-func NewSlackNotifier(name string, options map[string]string) (*SlackNotifier, error) {
+func NewSlackNotifier(name string, options NotifierOptions) (*SlackNotifier, error) {
 	if _, ok := options["webhook"]; !ok {
 		return nil, SlackMissingWebhookErr
 	}
 
 	sn := &SlackNotifier{
 		name:       name,
-		webhookUrl: options["webhook"],
+		webhookUrl: options["webhook"].(string),
 	}
 
 	delete(options, "webhook")
@@ -47,9 +47,9 @@ type SlackRequestBody struct {
 	Blocks []SlackBlock `json:"blocks"`
 }
 
-func (s *SlackNotifier) Notify(name, displayUrl string, result *result.Results) error {
+func (s *SlackNotifier) Notify(name, displayUrl string, result *messagequeue.CrawlResult) error {
 	var text string
-	if result.AllTrue() {
+	if result.Result {
 		text = fmt.Sprintf("<%s|%s> *matches* checks!", displayUrl, name)
 	} else {
 		text = fmt.Sprintf("%s does *not* match checks!", name)
@@ -69,7 +69,7 @@ func (s *SlackNotifier) Notify(name, displayUrl string, result *result.Results) 
 			Type: "section",
 			Text: SlackTextSection{
 				Type: "mrkdwn",
-				Text: fmt.Sprintf("%s: %t (err: %v)", r.ContentChecker, r.Result, r.Err),
+				Text: fmt.Sprintf("%s: %t (err: %v)", r.Message, r.Result, r.Err),
 			},
 		})
 	}

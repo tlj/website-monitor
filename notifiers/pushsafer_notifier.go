@@ -10,7 +10,7 @@ import (
 	"net/url"
 	"reflect"
 	"strings"
-	"website-monitor/result"
+	"website-monitor/messagequeue"
 )
 
 type PushSaferNotifier struct {
@@ -44,7 +44,7 @@ type PushSaferResponse struct {
 	Available int    `json:"available"`
 }
 
-func (p PushSaferNotifier) Notify(name, displayUrl string, result *result.Results) error {
+func (p PushSaferNotifier) Notify(name, displayUrl string, result *messagequeue.CrawlResult) error {
 	params := url.Values{}
 
 	for k, v := range p.options {
@@ -56,7 +56,7 @@ func (p PushSaferNotifier) Notify(name, displayUrl string, result *result.Result
 	params.Set("u", displayUrl)
 	params.Set("d", "a") // all devices
 
-	if result.AllTrue() {
+	if result.Result {
 		params.Set("m", fmt.Sprintf("<%s|%s> *matches* checks!", displayUrl, name))
 	} else {
 		params.Set("m", fmt.Sprintf("%s does *not* match checks!", name))
